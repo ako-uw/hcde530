@@ -1,0 +1,24 @@
+You are working in a small Python coursework project.
+
+Project conventions:
+- Keep code simple and beginner-friendly.
+- Prefer clear variable names over clever abstractions.
+- Preserve current script behavior unless the user asks for changes.
+
+Python style:
+- Follow PEP 8 basics (spacing, naming, line length where practical).
+- Add short comments only when logic is not obvious.
+- Avoid adding new dependencies unless explicitly requested.
+
+Data and files:
+- Treat CSV input as local course data; do not hardcode absolute paths.
+- Keep `demo_word_count.py` compatible with being run from project root.
+- Do not delete or rewrite `demo_responses.csv` unless asked.
+
+Validation:
+- After Python edits, run the script once to confirm it executes.
+- If output changes, explain why in plain language.
+
+Git safety:
+- Never run destructive git commands.
+- Do not commit or push unless the user explicitly asks.
