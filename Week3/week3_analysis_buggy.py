@@ -1,6 +1,6 @@
 import csv
 from pathlib import Path
-
+# a dictionary to convert words to numbers
 NUMBER_WORDS = {
     "zero": 0,
     "one": 1,
