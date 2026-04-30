@@ -5,23 +5,24 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
-# This is a public City of Seattle Open Data API endpoint.
-# It returns business license records in JSON format.
+# The City of Seattle publishes open business license data through this endpoint
+# It returns a list of active business licenses in JSON format
+# No API key required — it's fully public
 BASE_URL = "https://data.seattle.gov/resource/wnbq-64tb.json"
 
-# We save the output next to this script inside Week4.
+# Save the CSV output in the same folder as this script
 OUTPUT_CSV = Path(__file__).with_name("seattle_coffee_licenses.csv")
 
-# We ask for up to 1000 records to make sure we get at least 50 coffee businesses.
+# Ask for 1000 records to make sure we get well over 50 coffee businesses
 LIMIT = 1000
 
-# These are the columns we care about for this assignment.
-# - trade_name: the business name customers see.
-# - city: city where the business is registered.
-# - zip: postal code for location grouping.
-# - license_start_date: when the license became active.
-# - expiration_date: when the current license period ends.
-# - naics_description: business activity category/industry label.
+# These are the fields we're pulling from each record:
+# - trade_name: the name the business operates under (what customers see)
+# - city: city where the business is registered
+# - zip: zip code — useful for seeing which neighborhoods have the most coffee shops
+# - license_start_date: when the business first got licensed in Seattle
+# - expiration_date: when the license expires — can be empty if still active
+# - naics_description: industry category assigned by the government (e.g. "Snack and Nonalcoholic Beverage Bars")
 FIELDS = [
     "trade_name",
     "city",
@@ -31,17 +32,16 @@ FIELDS = [
     "naics_description",
 ]
 
-# The API select list excludes expiration_date because this dataset
-# does not provide that column in the endpoint schema.
+# expiration_date is included in the CSV but the API doesn't always return it
+# so we only request the other fields from the API and leave expiration_date blank if missing
 API_FIELDS = [field for field in FIELDS if field != "expiration_date"]
 
 
 def fetch_coffee_businesses():
     """Fetch coffee-related businesses from the Seattle dataset."""
-    # We use SoQL query params:
-    # - $select picks only required fields
-    # - $where keeps rows whose trade_name contains COFFEE (case-insensitive)
-    # - $limit controls how many records come back
+    # $select — only pull the fields we need instead of all 20+ columns in the dataset
+    # $where — filter to only businesses with "COFFEE" in the name (case-insensitive)
+    # $limit — cap the results at 1000 so we don't accidentally pull 80k+ records
     params = {
         "$select": ",".join(API_FIELDS),
         "$where": "upper(trade_name) like '%COFFEE%'",
@@ -67,8 +67,8 @@ def write_csv(records):
         writer.writeheader()
 
         for row in records:
-            # This keeps the CSV columns in a clean, consistent order.
-            # If expiration_date is missing from the source dataset, it is left blank.
+            # Make sure every row has all columns in the right order
+            # if a field is missing from the API response, we leave it blank
             clean_row = {field: row.get(field, "") for field in FIELDS}
             writer.writerow(clean_row)
 
