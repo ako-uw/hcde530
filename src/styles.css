@@ -97,6 +97,18 @@
   --sidebar-ring: oklch(0.704 0.04 256.788);
 }
 
+/* CritLens severity tokens */
+:root {
+  --sev-0: oklch(0.7 0.02 250);
+  --sev-1: oklch(0.62 0.13 230);
+  --sev-2: oklch(0.78 0.15 90);
+  --sev-3: oklch(0.68 0.18 50);
+  --sev-4: oklch(0.6 0.22 27);
+  --score-good: oklch(0.62 0.16 150);
+  --score-mid: oklch(0.75 0.16 85);
+  --score-bad: oklch(0.6 0.22 27);
+}
+
 .dark {
   --background: oklch(0.129 0.042 264.695);
   --foreground: oklch(0.984 0.003 247.858);
