@@ -38,9 +38,14 @@ export function InputPanel({
   }
 
   return (
-    <div className="rounded-2xl border bg-card p-5 md:p-6">
+    <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/60 p-5 backdrop-blur md:p-7 shadow-[0_30px_80px_-40px_oklch(0_0_0_/_0.6)]">
+      <div className="pointer-events-none absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+      <div className="mb-5 flex items-center justify-between">
+        <div className="font-mono-label text-muted-foreground">/ new evaluation</div>
+        <div className="font-mono-label text-muted-foreground hidden sm:block">10 heuristics · 0–10 score</div>
+      </div>
       <Tabs defaultValue="url">
-        <TabsList>
+        <TabsList className="bg-muted/60">
           <TabsTrigger value="url">
             <Link2 className="size-3.5" /> Enter URL
           </TabsTrigger>
@@ -49,25 +54,31 @@ export function InputPanel({
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="url" className="mt-4 space-y-3">
-          <Input
-            type="url"
-            placeholder="https://example.com"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            disabled={loading}
-          />
-          <Button
-            onClick={() => onAnalyze({ kind: "url", url })}
-            disabled={loading || !url}
-            className="w-full sm:w-auto"
-          >
-            {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-            Analyze design
-          </Button>
+        <TabsContent value="url" className="mt-5 space-y-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Input
+              type="url"
+              placeholder="https://your-product.com"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              disabled={loading}
+              className="h-12 rounded-xl bg-background/60 px-4 text-base"
+            />
+            <Button
+              onClick={() => onAnalyze({ kind: "url", url })}
+              disabled={loading || !url}
+              className="h-12 rounded-xl px-6 font-semibold"
+            >
+              {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+              Analyze
+            </Button>
+          </div>
+          <p className="font-mono-label text-muted-foreground">
+            Tip · Public pages only. JS-heavy sites may critique partial content.
+          </p>
         </TabsContent>
 
-        <TabsContent value="image" className="mt-4 space-y-3">
+        <TabsContent value="image" className="mt-5 space-y-3">
           {!preview ? (
             <div
               onClick={() => fileRef.current?.click()}
@@ -77,11 +88,13 @@ export function InputPanel({
                 const f = e.dataTransfer.files[0];
                 if (f) handleFile(f);
               }}
-              className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-muted/30 px-6 py-10 text-center transition-colors hover:bg-muted/50"
+              className="group flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border/70 bg-background/40 px-6 py-14 text-center transition-all hover:border-primary/60 hover:bg-primary/5"
             >
-              <Upload className="size-6 text-muted-foreground" />
-              <div className="text-sm font-medium">Drop image or click to upload</div>
-              <div className="text-xs text-muted-foreground">PNG, JPG or WEBP · up to 5MB</div>
+              <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary transition-transform group-hover:scale-110">
+                <Upload className="size-5" />
+              </div>
+              <div className="mt-2 font-display text-xl">Drop your screenshot</div>
+              <div className="font-mono-label text-muted-foreground">PNG · JPG · WEBP — max 5MB</div>
               <input
                 ref={fileRef}
                 type="file"
@@ -94,11 +107,11 @@ export function InputPanel({
               />
             </div>
           ) : (
-            <div className="relative overflow-hidden rounded-xl border">
-              <img src={preview.dataUrl} alt={preview.name} className="max-h-72 w-full object-contain bg-muted" />
+            <div className="relative overflow-hidden rounded-2xl border border-border/60">
+              <img src={preview.dataUrl} alt={preview.name} className="max-h-80 w-full object-contain bg-background/40" />
               <button
                 onClick={() => setPreview(null)}
-                className="absolute right-2 top-2 rounded-full bg-background/90 p-1.5 shadow hover:bg-background"
+                className="absolute right-3 top-3 rounded-full bg-background/90 p-2 shadow hover:bg-background"
               >
                 <X className="size-3.5" />
               </button>
@@ -110,7 +123,7 @@ export function InputPanel({
               onAnalyze({ kind: "image", dataUrl: preview.dataUrl, mimeType: preview.mimeType })
             }
             disabled={loading || !preview}
-            className="w-full sm:w-auto"
+            className="h-12 w-full rounded-xl px-6 font-semibold sm:w-auto"
           >
             {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
             Analyze screenshot

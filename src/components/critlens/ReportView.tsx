@@ -54,13 +54,16 @@ export function ReportView({ report }: { report: CritiqueReport }) {
   })).filter((g) => g.issues.length > 0);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <ScoreHero score={report.overallScore} summary={report.summary} />
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="font-mono-label text-muted-foreground">/ {report.issues.length} issues found</div>
+        <div className="flex flex-wrap gap-2">
         <Button
           variant="outline"
           size="sm"
+          className="rounded-full"
           onClick={() => {
             navigator.clipboard.writeText(toMarkdown(report));
             toast.success("Markdown copied");
@@ -71,25 +74,31 @@ export function ReportView({ report }: { report: CritiqueReport }) {
         <Button
           variant="outline"
           size="sm"
+          className="rounded-full"
           onClick={() =>
             download("critlens-report.json", JSON.stringify(report, null, 2), "application/json")
           }
         >
           <Download className="size-3.5" /> Export JSON
         </Button>
+        </div>
       </div>
 
       {report.topPriorities.length > 0 && (
-        <section className="space-y-3">
-          <h3 className="text-lg font-semibold tracking-tight">Top priorities</h3>
-          <div className="grid gap-3 md:grid-cols-3">
+        <section className="space-y-4">
+          <div className="flex items-end justify-between border-b border-border/60 pb-3">
+            <h3 className="font-display text-3xl">Top priorities</h3>
+            <span className="font-mono-label text-muted-foreground">/ fix first</span>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
             {report.topPriorities.map((i, idx) => (
-              <div key={idx} className="rounded-xl border bg-card p-4">
-                <div className="text-xs font-medium text-muted-foreground">
-                  Priority {idx + 1} · H{i.heuristic}
+              <div key={idx} className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card/60 p-5 transition-colors hover:border-primary/50">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono-label text-primary">P{idx + 1} · H{i.heuristic}</span>
+                  <span className="font-mono-label text-muted-foreground">SEV {i.severity}</span>
                 </div>
-                <div className="mt-1 text-sm font-semibold">{i.title}</div>
-                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                <div className="mt-3 font-display text-xl leading-tight">{i.title}</div>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                   {i.recommendation}
                 </p>
               </div>
@@ -98,18 +107,26 @@ export function ReportView({ report }: { report: CritiqueReport }) {
         </section>
       )}
 
-      <HeuristicBreakdown scores={report.heuristicScores} />
+      <section id="heuristics" className="space-y-4">
+        <div className="flex items-end justify-between border-b border-border/60 pb-3">
+          <h3 className="font-display text-3xl">Scoring breakdown</h3>
+          <span className="font-mono-label text-muted-foreground">/ 10 heuristics</span>
+        </div>
+        <HeuristicBreakdown scores={report.heuristicScores} />
+      </section>
 
-      <section className="space-y-4">
-        <h3 className="text-lg font-semibold tracking-tight">
-          All issues ({report.issues.length})
-        </h3>
+      <section className="space-y-6">
+        <div className="flex items-end justify-between border-b border-border/60 pb-3">
+          <h3 className="font-display text-3xl">All issues</h3>
+          <span className="font-mono-label text-muted-foreground">/ {report.issues.length} total</span>
+        </div>
         {grouped.map(({ h, issues }) => (
           <div key={h.id} className="space-y-3">
-            <div className="text-sm font-medium text-muted-foreground">
-              H{h.id} · {h.name}
+            <div className="flex items-center gap-3">
+              <span className="font-mono-label text-primary">H{h.id}</span>
+              <span className="font-display text-xl">{h.name}</span>
             </div>
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2">
               {issues.map((i, idx) => (
                 <IssueCard key={idx} issue={i} />
               ))}
