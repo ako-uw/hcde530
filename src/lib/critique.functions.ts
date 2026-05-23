@@ -135,47 +135,45 @@ function computeReport(
   };
 }
 
-type ClaudeContent =
+type UserContentPart =
   | { type: "text"; text: string }
-  | {
-      type: "image";
-      source:
-        | { type: "base64"; media_type: string; data: string }
-        | { type: "url"; url: string };
-    };
+  | { type: "image_url"; image_url: { url: string } };
 
-async function callClaude(content: ClaudeContent[]): Promise<string> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured");
+async function callAI(content: UserContentPart[]): Promise<string> {
+  const apiKey = process.env.LOVABLE_API_KEY;
+  if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-5",
-      max_tokens: 4096,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content }],
+      model: "google/gemini-3-flash-preview",
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content },
+      ],
     }),
   });
 
   if (!res.ok) {
     const errText = await res.text();
-    throw new Error(`Claude API ${res.status}: ${errText.slice(0, 500)}`);
+    if (res.status === 429) {
+      throw new Error("Rate limit exceeded. Please wait a moment and try again.");
+    }
+    if (res.status === 402) {
+      throw new Error("AI credits exhausted. Please add credits in Settings > Workspace > Usage.");
+    }
+    throw new Error(`AI gateway ${res.status}: ${errText.slice(0, 500)}`);
   }
 
   const json = (await res.json()) as {
-    content: { type: string; text?: string }[];
+    choices?: { message?: { content?: string } }[];
   };
-  const text = json.content
-    ?.filter((c) => c.type === "text")
-    .map((c) => c.text ?? "")
-    .join("\n");
-  if (!text) throw new Error("Empty response from Claude");
+  const text = json.choices?.[0]?.message?.content;
+  if (!text) throw new Error("Empty response from AI gateway");
   return text;
 }
 
@@ -195,14 +193,10 @@ export const analyzeDesign = createServerFn({ method: "POST" })
       ];
       source = { kind: "url", url: data.url };
     } else {
-      // dataUrl: "data:image/png;base64,...."
-      const base64 = data.dataUrl.includes(",")
-        ? data.dataUrl.split(",", 2)[1]
-        : data.dataUrl;
       content = [
         {
-          type: "image",
-          source: { type: "base64", media_type: data.mimeType, data: base64 },
+          type: "image_url",
+          image_url: { url: data.dataUrl },
         },
         {
           type: "text",
@@ -212,7 +206,7 @@ export const analyzeDesign = createServerFn({ method: "POST" })
       source = { kind: "image" };
     }
 
-    const raw = await callClaude(content);
+    const raw = await callAI(content);
     const parsed = ClaudeResponseSchema.parse(extractJson(raw));
     return computeReport(parsed, source);
   });
