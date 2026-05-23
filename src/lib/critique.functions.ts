@@ -180,7 +180,7 @@ async function callAI(content: UserContentPart[]): Promise<string> {
 export const analyzeDesign = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }): Promise<CritiqueReport> => {
-    let content: ClaudeContent[];
+    let content: UserContentPart[];
     let source: CritiqueReport["source"];
 
     if (data.kind === "url") {
