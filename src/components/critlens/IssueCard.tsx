@@ -1,27 +1,32 @@
 import { HEURISTICS } from "@/lib/heuristics";
 import type { Issue } from "@/lib/critique.types";
-import { SeverityBadge } from "./SeverityBadge";
+import { SeverityBadge, severityVar } from "./SeverityBadge";
+import { EvidenceBadge } from "./EvidenceBadge";
 
 export function IssueCard({ issue }: { issue: Issue }) {
   const h = HEURISTICS.find((x) => x.id === issue.heuristic);
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card/60 p-5 transition-all hover:border-primary/50 hover:bg-card/80">
+    <div
+      className="rounded-lg border border-border bg-card p-5"
+      style={{ borderLeft: `3px solid ${severityVar(issue.severity)}` }}
+    >
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="space-y-1">
-          <div className="font-mono-label text-primary">
-            H{issue.heuristic} · {h?.name}
+        <div className="space-y-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-label">H{issue.heuristic} · {h?.name}</span>
+            <EvidenceBadge evidence={issue.evidence} />
           </div>
-          <h4 className="font-display text-xl leading-tight">{issue.title}</h4>
+          <h4 className="text-[15px] font-medium leading-snug text-foreground">{issue.title}</h4>
         </div>
         <SeverityBadge severity={issue.severity} />
       </div>
-      <p className="mt-3 text-sm leading-relaxed text-foreground/80">{issue.description}</p>
-      <div className="mt-4 flex gap-2 text-xs text-muted-foreground">
-        <span className="font-mono-label shrink-0 text-foreground/70">Where</span>
-        <span>{issue.location}</span>
+      <p className="mt-3 text-sm leading-relaxed text-foreground/90">{issue.description}</p>
+      <div className="mt-3 text-xs text-muted-foreground">
+        <span className="text-label mr-1">Location</span>
+        {issue.location}
       </div>
-      <div className="mt-3 rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm">
-        <span className="font-mono-label text-primary">Fix · </span>
+      <div className="mt-3 rounded-md surface p-3 text-sm">
+        <span className="text-label mr-1">Recommendation</span>
         <span className="text-foreground/90">{issue.recommendation}</span>
       </div>
     </div>

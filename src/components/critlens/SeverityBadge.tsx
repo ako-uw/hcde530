@@ -1,20 +1,24 @@
 import { SEVERITY_LABEL } from "@/lib/heuristics";
 
 const COLORS: Record<number, string> = {
-  0: "bg-[color:var(--sev-0)]/15 text-[color:var(--sev-0)] border-[color:var(--sev-0)]/30",
-  1: "bg-[color:var(--sev-1)]/15 text-[color:var(--sev-1)] border-[color:var(--sev-1)]/30",
-  2: "bg-[color:var(--sev-2)]/20 text-[color:var(--sev-2)] border-[color:var(--sev-2)]/40",
-  3: "bg-[color:var(--sev-3)]/20 text-[color:var(--sev-3)] border-[color:var(--sev-3)]/40",
-  4: "bg-[color:var(--sev-4)]/20 text-[color:var(--sev-4)] border-[color:var(--sev-4)]/40",
+  0: "text-[color:var(--sev-0)] bg-[color:var(--sev-0-bg)]",
+  1: "text-[color:var(--sev-1)] bg-[color:var(--sev-1-bg)]",
+  2: "text-[color:var(--sev-2)] bg-[color:var(--sev-2-bg)]",
+  3: "text-[color:var(--sev-3)] bg-[color:var(--sev-3-bg)]",
+  4: "text-[color:var(--sev-4)] bg-[color:var(--sev-4-bg)]",
 };
 
 export function SeverityBadge({ severity }: { severity: number }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium ${COLORS[severity] ?? COLORS[0]}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium ${COLORS[severity] ?? COLORS[0]}`}
     >
       <span className="size-1.5 rounded-full bg-current" />
-      {SEVERITY_LABEL[severity]} · {severity}
+      S{severity} · {SEVERITY_LABEL[severity]}
     </span>
   );
+}
+
+export function severityVar(severity: number): string {
+  return `var(--sev-${Math.max(0, Math.min(4, severity))})`;
 }
