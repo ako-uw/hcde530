@@ -17,7 +17,7 @@ const InputSchema = z.discriminatedUnion("kind", [
   }),
 ]);
 
-const SYSTEM_PROMPT = `You are a senior UX expert conducting a formal heuristic evaluation using Nielsen's 10 Usability Heuristics.
+const SYSTEM_PROMPT = `You are a senior UX expert performing a formal Nielsen heuristic evaluation. You apply strict integrity rules.
 
 Nielsen's 10 Heuristics:
 1. Visibility of system status
@@ -31,37 +31,56 @@ Nielsen's 10 Heuristics:
 9. Help users recognize, diagnose, and recover from errors
 10. Help and documentation
 
-For each issue you find:
-- Identify the heuristic number (1-10) it violates.
-- Describe WHERE on the page the issue appears in plain language (e.g. "the primary CTA in the hero", "the navigation bar on the top right", "the pricing card labeled Pro").
-- Rate severity 0-4: 0=cosmetic, 1=minor, 2=moderate, 3=major, 4=catastrophic.
-- Give a concrete, actionable recommendation.
+INTEGRITY RULES — apply strictly:
 
-Return STRICT JSON ONLY (no markdown fences, no prose) matching this schema:
+Rule 1 — Page-load verification. If the only observable content is an error page, waiting room, queue, CDN/bot-check, redirect loop, 4xx/5xx, "Just a moment", "Checking your browser", "Access denied", or similar infrastructure state, DO NOT produce a heuristic report. Instead return:
+{ "blocked": true, "reason": "<one short sentence naming the specific error>" }
+
+Rule 2 — Evidence tags (mandatory). Every issue and every heuristic must carry an evidence tag:
+- "Observed" — the element was directly visible in the loaded interface.
+- "Partial" — the heuristic was partially assessable from available content.
+- "Out of scope" — requires live interaction, multi-step flows, error triggering, or dynamic states not available in this evaluation pass.
+A heuristic tagged "Out of scope" gets no score and is excluded from the average. Never assert perfection for what you did not observe — absence of evidence is not evidence of absence.
+
+Rule 3 — Score/finding consistency. A heuristic cannot carry both a high score (>=8) AND an active finding. If you list a finding under a heuristic, your evidence must reflect a violation.
+
+Rule 4 — Infrastructure vs UX separation. Server errors, redirects, CDN behavior, queue/waiting-room systems, session tokens, URL parameters are INFRASTRUCTURE — never map them to NNG heuristics. If that's all you can see, return blocked per Rule 1.
+
+For each issue:
+- heuristic (1–10), title, description (what is wrong and why), location (plain-language where on the page), severity 0–4 (0 cosmetic, 1 minor, 2 moderate, 3 major, 4 catastrophic), recommendation (concrete fix), evidence ("Observed" | "Partial" | "Out of scope").
+
+Return STRICT JSON ONLY (no markdown fences, no prose). Either the blocked shape above, or:
 {
-  "summary": "2-3 sentence overall summary of the design's UX quality",
-  "issues": [
-    {
-      "heuristic": 1,
-      "title": "Short issue title",
-      "description": "What is wrong and why it hurts UX",
-      "location": "Plain-language description of where on the page",
-      "severity": 0,
-      "recommendation": "Concrete fix"
-    }
-  ]
+  "blocked": false,
+  "summary": "2-3 sentence overall summary grounded ONLY in what was observed",
+  "issues": [ { "heuristic": 1, "title": "...", "description": "...", "location": "...", "severity": 2, "recommendation": "...", "evidence": "Observed" } ],
+  "heuristicEvaluations": [ { "id": 1, "evidence": "Observed" }, { "id": 2, "evidence": "Out of scope", "note": "no system-language content visible" } ]
 }
 
-Find 6-15 distinct issues across the heuristics. Be honest and specific. If a heuristic is well-satisfied, you can skip it.`;
+Include all 10 heuristics in heuristicEvaluations. Be honest: when in doubt, mark "Partial" or "Out of scope" rather than inflating.`;
 
-async function fetchUrlText(url: string): Promise<string> {
+type FetchResult = { ok: true; text: string } | { ok: false; reason: string };
+
+const BLOCK_PATTERNS: { rx: RegExp; reason: string }[] = [
+  { rx: /just a moment/i, reason: "Cloudflare bot-check interstitial ('Just a moment…')" },
+  { rx: /checking your browser/i, reason: "Bot-protection challenge page" },
+  { rx: /attention required.*cloudflare/i, reason: "Cloudflare 'Attention Required' challenge" },
+  { rx: /access denied/i, reason: "Access denied page" },
+  { rx: /you are in (a )?queue|virtual waiting room|queue-it/i, reason: "Virtual waiting room / queue" },
+  { rx: /enable javascript.*continue/i, reason: "JavaScript-required gate; no static UI content" },
+  { rx: /<title>\s*(403|404|500|502|503|504)/i, reason: "HTTP error page returned as content" },
+];
+
+async function fetchUrlText(url: string): Promise<FetchResult> {
   try {
     const res = await fetch(url, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; CritLensBot/1.0)" },
+      redirect: "follow",
     });
-    if (!res.ok) return `(Failed to fetch URL: HTTP ${res.status})`;
+    if (!res.ok) {
+      return { ok: false, reason: `HTTP ${res.status} ${res.statusText || ""} returned by the URL`.trim() };
+    }
     const html = await res.text();
-    // Strip scripts/styles and tags to text
     const cleaned = html
       .replace(/<script[\s\S]*?<\/script>/gi, " ")
       .replace(/<style[\s\S]*?<\/style>/gi, " ")
@@ -69,67 +88,74 @@ async function fetchUrlText(url: string): Promise<string> {
       .replace(/<[^>]+>/g, " ")
       .replace(/\s+/g, " ")
       .trim();
-    return cleaned.slice(0, 12000);
+    for (const { rx, reason } of BLOCK_PATTERNS) {
+      if (rx.test(html) || rx.test(cleaned)) return { ok: false, reason };
+    }
+    if (cleaned.length < 80) {
+      return { ok: false, reason: "Page returned almost no readable content (likely client-rendered, gated, or empty)" };
+    }
+    return { ok: true, text: cleaned.slice(0, 12000) };
   } catch (e) {
-    return `(Error fetching URL: ${(e as Error).message})`;
+    return { ok: false, reason: `Network error fetching URL: ${(e as Error).message}` };
   }
 }
 
 function extractJson(text: string): unknown {
   const trimmed = text.trim();
-  // Try direct parse first
   try {
     return JSON.parse(trimmed);
   } catch {
-    // Try to pull from code fence
     const fence = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (fence) {
-      return JSON.parse(fence[1].trim());
-    }
-    // Try first { ... last }
+    if (fence) return JSON.parse(fence[1].trim());
     const start = trimmed.indexOf("{");
     const end = trimmed.lastIndexOf("}");
-    if (start !== -1 && end > start) {
-      return JSON.parse(trimmed.slice(start, end + 1));
-    }
+    if (start !== -1 && end > start) return JSON.parse(trimmed.slice(start, end + 1));
     throw new Error("Model did not return JSON");
   }
 }
 
 function computeReport(
   parsed: z.infer<typeof ClaudeResponseSchema>,
-  source: CritiqueReport["source"],
+  source: { kind: "url"; url: string } | { kind: "image" },
 ): CritiqueReport {
-  const issues: Issue[] = parsed.issues;
+  if ("blocked" in parsed && parsed.blocked === true) {
+    return { blocked: true, reason: parsed.reason, source };
+  }
+  const ok = parsed as Extract<typeof parsed, { summary: string }>;
+  const issues: Issue[] = ok.issues;
+  const evalMap = new Map(ok.heuristicEvaluations?.map((e) => [e.id, e]) ?? []);
 
   const heuristicScores: HeuristicScore[] = HEURISTICS.map((h) => {
     const its = issues.filter((i) => i.heuristic === h.id);
     const deductions = its.map((i) => ({ severity: i.severity, title: i.title }));
-    const totalDed = its.reduce(
-      (sum, i) => sum + (SEVERITY_DEDUCTION[i.severity] ?? 0),
-      0,
-    );
-    const score = Math.max(0, Math.min(10, 10 - totalDed));
-    return {
-      id: h.id,
-      name: h.name,
-      score: Math.round(score * 10) / 10,
-      deductions,
-    };
+    const evalEntry = evalMap.get(h.id);
+    let evidence: HeuristicScore["evidence"];
+    if (evalEntry) evidence = evalEntry.evidence;
+    else if (its.length > 0) evidence = its.some((i) => i.evidence === "Observed") ? "Observed" : "Partial";
+    else evidence = "Out of scope";
+
+    if (evidence === "Out of scope") {
+      return { id: h.id, name: h.name, score: null, evidence, deductions };
+    }
+    const totalDed = its.reduce((s, i) => s + (SEVERITY_DEDUCTION[i.severity] ?? 0), 0);
+    let score = Math.max(0, Math.min(10, 10 - totalDed));
+    if (its.length > 0 && score >= 8) score = 7.5; // Rule 3
+    return { id: h.id, name: h.name, score: Math.round(score * 10) / 10, evidence, deductions };
   });
 
-  const overall =
-    heuristicScores.reduce((s, h) => s + h.score, 0) / heuristicScores.length;
-
-  const topPriorities = [...issues]
-    .sort((a, b) => b.severity - a.severity)
-    .slice(0, 3);
+  const scored = heuristicScores.filter(
+    (h): h is HeuristicScore & { score: number } => h.score !== null,
+  );
+  const overall = scored.length === 0 ? 0 : scored.reduce((s, h) => s + h.score, 0) / scored.length;
+  const topPriorities = [...issues].sort((a, b) => b.severity - a.severity).slice(0, 3);
 
   return {
-    summary: parsed.summary,
+    blocked: false,
+    summary: ok.summary,
     issues,
     heuristicScores,
     overallScore: Math.round(overall * 10) / 10,
+    scoredCount: scored.length,
     topPriorities,
     source,
   };
@@ -160,18 +186,12 @@ async function callAI(content: UserContentPart[]): Promise<string> {
 
   if (!res.ok) {
     const errText = await res.text();
-    if (res.status === 429) {
-      throw new Error("Rate limit exceeded. Please wait a moment and try again.");
-    }
-    if (res.status === 402) {
-      throw new Error("AI credits exhausted. Please add credits in Settings > Workspace > Usage.");
-    }
+    if (res.status === 429) throw new Error("Rate limit exceeded. Please wait a moment and try again.");
+    if (res.status === 402) throw new Error("AI credits exhausted. Please add credits in Settings > Workspace > Usage.");
     throw new Error(`AI gateway ${res.status}: ${errText.slice(0, 500)}`);
   }
 
-  const json = (await res.json()) as {
-    choices?: { message?: { content?: string } }[];
-  };
+  const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
   const text = json.choices?.[0]?.message?.content;
   if (!text) throw new Error("Empty response from AI gateway");
   return text;
@@ -181,26 +201,26 @@ export const analyzeDesign = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }): Promise<CritiqueReport> => {
     let content: UserContentPart[];
-    let source: CritiqueReport["source"];
+    let source: { kind: "url"; url: string } | { kind: "image" };
 
     if (data.kind === "url") {
-      const text = await fetchUrlText(data.url);
+      const fetched = await fetchUrlText(data.url);
+      if (!fetched.ok) {
+        return { blocked: true, reason: fetched.reason, source: { kind: "url", url: data.url } };
+      }
       content = [
         {
           type: "text",
-          text: `Evaluate the UX of this web page. URL: ${data.url}\n\nExtracted text content from the page:\n${text}\n\nReturn your heuristic evaluation as strict JSON.`,
+          text: `Evaluate the UX of this web page following the integrity rules.\n\nURL: ${data.url}\n\nExtracted text content from the page:\n${fetched.text}\n\nReturn strict JSON.`,
         },
       ];
       source = { kind: "url", url: data.url };
     } else {
       content = [
-        {
-          type: "image_url",
-          image_url: { url: data.dataUrl },
-        },
+        { type: "image_url", image_url: { url: data.dataUrl } },
         {
           type: "text",
-          text: "Evaluate the UX of this design screenshot. Return your heuristic evaluation as strict JSON.",
+          text: "Evaluate the UX of this design screenshot following the integrity rules. Return strict JSON.",
         },
       ];
       source = { kind: "image" };
