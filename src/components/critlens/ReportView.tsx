@@ -1,4 +1,4 @@
-import type { CritiqueReport, Issue } from "@/lib/critique.types";
+import type { CritiqueReport, Issue, OkReport } from "@/lib/critique.types";
 import { HEURISTICS } from "@/lib/heuristics";
 import { ScoreHero } from "./ScoreHero";
 import { HeuristicBreakdown } from "./HeuristicBreakdown";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Download, Copy } from "lucide-react";
 import { toast } from "sonner";
 
-function toMarkdown(r: Extract<CritiqueReport, { blocked: false }>): string {
+function toMarkdown(r: OkReport): string {
   const lines: string[] = [];
   lines.push(`# CritLens UX Report`);
   lines.push("");
