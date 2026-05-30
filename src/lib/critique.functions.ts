@@ -42,7 +42,7 @@ Rule 2 — Evidence tags (mandatory). Every issue and every heuristic must carry
 - "Out of scope" — requires live interaction, multi-step flows, error triggering, or dynamic states not available in this evaluation pass.
 A heuristic tagged "Out of scope" gets no score and is excluded from the average. Never assert perfection for what you did not observe — absence of evidence is not evidence of absence.
 
-Rule 3 — Score/finding consistency. A heuristic cannot carry both a high score (>=8) AND an active finding. If you list a finding under a heuristic, your evidence must reflect a violation.
+Rule 3 — Score/finding consistency. A heuristic with an active finding is capped by the most severe finding: S4 → max 5.0, S3 → max 6.5, S2 → max 7.5, S1 → max 8.5. If you list a finding under a heuristic, the evidence must reflect a real violation.
 
 Rule 4 — Infrastructure vs UX separation. Server errors, redirects, CDN behavior, queue/waiting-room systems, session tokens, URL parameters are INFRASTRUCTURE — never map them to NNG heuristics. If that's all you can see, return blocked per Rule 1.
 
