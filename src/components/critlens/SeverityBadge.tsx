@@ -23,7 +23,3 @@ export function SeverityBadge({ severity }: { severity: number }) {
 export function severityVar(severity: number): string {
   return `var(--sev-${Math.max(0, Math.min(4, severity))})`;
 }
-
-export function severityVar(severity: number): string {
-  return `var(--sev-${Math.max(0, Math.min(4, severity))})`;
-}

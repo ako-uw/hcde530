@@ -10,10 +10,10 @@ function barColor(s: number) {
 
 export function HeuristicBreakdown({ scores }: { scores: HeuristicScore[] }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card">
+    <div className="overflow-hidden rounded-lg border border-border bg-card shadow-card">
       <div className="border-b border-border px-5 py-3 text-xs text-muted-foreground">
-        Each scored heuristic starts at 10. Points deducted per issue severity. Out-of-scope
-        heuristics are excluded from the overall average.
+        Each scored heuristic starts at 10. Findings deduct per severity and cap the score (S4 → 5.0,
+        S3 → 6.5, S2 → 7.5, S1 → 8.5). Out-of-scope heuristics are excluded from the average.
       </div>
       <ul className="divide-y divide-border">
         {scores.map((h) => {
@@ -22,7 +22,7 @@ export function HeuristicBreakdown({ scores }: { scores: HeuristicScore[] }) {
           const pct = score === null ? 0 : (score / 10) * 100;
           const color = score === null ? "var(--ev-oos)" : barColor(score);
           return (
-            <li key={h.id} className="grid grid-cols-[1fr_auto] items-center gap-4 px-5 py-3.5">
+            <li key={h.id} className="grid grid-cols-[1fr_auto] items-center gap-4 px-5 py-4">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-label">H{h.id}</span>
@@ -33,6 +33,9 @@ export function HeuristicBreakdown({ scores }: { scores: HeuristicScore[] }) {
                   <div className="mt-1 text-xs text-muted-foreground">
                     {h.deductions.length} finding{h.deductions.length === 1 ? "" : "s"}
                   </div>
+                )}
+                {oos && h.note && (
+                  <div className="mt-1 text-xs text-muted-foreground italic">{h.note}</div>
                 )}
               </div>
               <div className="flex items-center gap-3">
