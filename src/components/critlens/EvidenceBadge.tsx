@@ -9,7 +9,7 @@ const STYLES: Record<Evidence, string> = {
 export function EvidenceBadge({ evidence }: { evidence: Evidence }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${STYLES[evidence]}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.04em] ${STYLES[evidence]}`}
     >
       {evidence}
     </span>

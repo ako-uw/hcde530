@@ -41,6 +41,7 @@ export type HeuristicScore = {
   name: string;
   score: number | null; // null = Out of scope, excluded from average
   evidence: Evidence;
+  note?: string;
   deductions: { severity: number; title: string }[];
 };
 
@@ -49,6 +50,7 @@ export type ReportSource = { kind: "url"; url: string } | { kind: "image" };
 export type BlockedReport = {
   blocked: true;
   reason: string;
+  kind?: "fetch_failed" | "challenge" | "other";
   source: ReportSource;
 };
 

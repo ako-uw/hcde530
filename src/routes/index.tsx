@@ -32,6 +32,11 @@ function Index() {
     onSuccess: (data) => setReport(data),
   });
 
+  function runAnalyze(input: AnalysisInput) {
+    setReport(null);
+    mutation.mutate(input);
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Toaster />
@@ -58,13 +63,13 @@ function Index() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl space-y-8 px-5 py-8 md:px-8 md:py-10">
+      <main className="mx-auto max-w-5xl space-y-8 px-5 py-8 md:px-8 md:py-10" style={{ rowGap: 32 }}>
         {!report && (
-          <section className="space-y-2">
-            <h1 className="text-display text-3xl md:text-4xl">
+          <section className="space-y-3">
+            <h1 className="text-display text-[28px] md:text-[32px] leading-[1.15]">
               Nielsen heuristic evaluation, scored and structured.
             </h1>
-            <p className="max-w-2xl text-[15px] text-muted-foreground">
+            <p className="max-w-2xl text-[15px] leading-[1.7] text-muted-foreground">
               Submit a URL or a screenshot. CritLens audits the interface against the 10 NNG
               heuristics, tags each finding with evidence, and excludes anything it couldn't
               observe from the score.
@@ -72,28 +77,29 @@ function Index() {
           </section>
         )}
 
-        <InputPanel
-          loading={mutation.isPending}
-          onAnalyze={(input) => {
-            setReport(null);
-            mutation.mutate(input);
-          }}
-        />
+        <InputPanel loading={mutation.isPending} onAnalyze={runAnalyze} />
 
         {mutation.isPending && (
-          <div className="flex items-center gap-3 rounded-lg border border-border surface px-4 py-3 text-sm text-muted-foreground">
+          <div className="flex items-center gap-3 rounded-lg border border-border bg-card shadow-card px-4 py-3 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
             Running heuristic evaluation… this typically takes 20–40 seconds.
           </div>
         )}
 
         {mutation.isError && (
-          <div className="rounded-lg border border-[color:var(--sev-4)]/40 bg-[color:var(--sev-4-bg)] px-4 py-3 text-sm text-foreground">
+          <div className="rounded-lg border border-[color:var(--sev-4)]/40 bg-[color:var(--sev-4-bg)] shadow-card px-4 py-3 text-sm text-foreground">
             {(mutation.error as Error).message || "Analysis failed."}
           </div>
         )}
 
-        {report && <ReportView report={report} />}
+        {report && (
+          <ReportView
+            report={report}
+            onImageSelected={(dataUrl, mimeType) =>
+              runAnalyze({ kind: "image", dataUrl, mimeType })
+            }
+          />
+        )}
 
         {!report && !mutation.isPending && <Methodology />}
       </main>
@@ -120,7 +126,7 @@ function Methodology() {
     },
     {
       t: "Score consistency",
-      d: "A heuristic with active findings cannot score above 7.5. High scores require Observed evidence and no violations.",
+      d: "A heuristic's score is capped by its most severe finding: S4 → 5.0, S3 → 6.5, S2 → 7.5, S1 → 8.5. High scores require Observed evidence and no violations.",
     },
     {
       t: "Infrastructure separation",
@@ -135,9 +141,9 @@ function Methodology() {
       </div>
       <div className="grid gap-3 md:grid-cols-2">
         {rows.map((r) => (
-          <div key={r.t} className="rounded-lg border border-border bg-card p-5">
+          <div key={r.t} className="rounded-lg border border-border bg-card shadow-card p-5">
             <div className="text-sm font-medium text-foreground">{r.t}</div>
-            <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{r.d}</p>
+            <p className="mt-1.5 text-sm text-muted-foreground leading-[1.7]">{r.d}</p>
           </div>
         ))}
       </div>

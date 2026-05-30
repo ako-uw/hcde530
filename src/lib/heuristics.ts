@@ -24,8 +24,17 @@ export const SEVERITY_DEDUCTION: Record<number, number> = {
 
 export const SEVERITY_LABEL: Record<number, string> = {
   0: "Cosmetic",
-  1: "Minor",
-  2: "Moderate",
+  1: "Cosmetic",
+  2: "Minor",
   3: "Major",
-  4: "Critical",
+  4: "Catastrophic",
+};
+
+// Per Rule 3 (tightened): the most severe finding caps a heuristic's score.
+export const SEVERITY_SCORE_CAP: Record<number, number> = {
+  0: 9.0,
+  1: 8.5,
+  2: 7.5,
+  3: 6.5,
+  4: 5.0,
 };

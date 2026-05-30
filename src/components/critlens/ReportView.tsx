@@ -10,32 +10,56 @@ import { toast } from "sonner";
 
 function toMarkdown(r: OkReport): string {
   const lines: string[] = [];
+  const unscored = r.heuristicScores.filter((h) => h.score === null);
   lines.push(`# CritLens UX Report`);
   lines.push("");
-  lines.push(`**Overall score:** ${r.overallScore.toFixed(1)} / 10 (based on ${r.scoredCount} of 10 heuristics)`);
+  lines.push(
+    `**Overall score:** ${r.overallScore.toFixed(1)} / 10 (based on ${r.scoredCount} of 10 heuristics scored).`,
+  );
+  if (unscored.length > 0) {
+    lines.push(
+      `_${unscored.length} heuristic${unscored.length === 1 ? "" : "s"} not scored — insufficient observable evidence._`,
+    );
+  }
   lines.push("");
   lines.push(`## Summary`);
   lines.push(r.summary);
   lines.push("");
   lines.push(`## Scoring breakdown`);
   r.heuristicScores.forEach((h) => {
-    const s = h.score === null ? "— (Out of scope)" : `${h.score.toFixed(1)} / 10 (${h.evidence})`;
+    const s =
+      h.score === null
+        ? `— (Out of scope — ${h.note ?? "insufficient evidence"})`
+        : `${h.score.toFixed(1)} / 10 — Evidence: ${h.evidence}`;
     lines.push(`- **H${h.id} ${h.name}** — ${s}`);
   });
   lines.push("");
+  if (unscored.length > 0) {
+    lines.push(`## Unscored heuristics`);
+    unscored.forEach((h) => {
+      lines.push(`- **H${h.id} ${h.name}** — ${h.note ?? "Insufficient observable evidence."}`);
+    });
+    lines.push("");
+  }
   lines.push(`## Top priorities`);
   r.topPriorities.forEach((i, idx) => {
-    lines.push(`${idx + 1}. **${i.title}** (H${i.heuristic}, S${i.severity}, ${i.evidence}) — ${i.recommendation}`);
+    lines.push(
+      `${idx + 1}. **${i.title}** (H${i.heuristic}, S${i.severity}, Evidence: ${i.evidence}) — ${i.recommendation}`,
+    );
   });
   lines.push("");
   lines.push(`## All findings`);
   r.issues.forEach((i) => {
-    lines.push(`### H${i.heuristic} — ${i.title} (S${i.severity}, ${i.evidence})`);
+    lines.push(`### H${i.heuristic} — ${i.title} (S${i.severity}, Evidence: ${i.evidence})`);
     lines.push(`- Location: ${i.location}`);
     lines.push(`- ${i.description}`);
     lines.push(`- Recommendation: ${i.recommendation}`);
     lines.push("");
   });
+  lines.push(`## Methodology`);
+  lines.push(
+    "Evaluation follows Nielsen's 10 Usability Heuristics with strict integrity rules: (1) page-load verification — blocked rather than scored on infrastructure errors, queues, or CDN challenges; (2) every finding and heuristic carries an evidence tag (Observed / Partial / Out of scope); (3) scores are capped by the most severe finding (S4 → 5.0, S3 → 6.5, S2 → 7.5, S1 → 8.5); (4) infrastructure issues are never mapped to NNG heuristics; (5) Out-of-scope heuristics are excluded from the overall average.",
+  );
   return lines.join("\n");
 }
 
@@ -49,9 +73,22 @@ function download(filename: string, content: string, mime: string) {
   URL.revokeObjectURL(url);
 }
 
-export function ReportView({ report }: { report: CritiqueReport }) {
+export function ReportView({
+  report,
+  onImageSelected,
+}: {
+  report: CritiqueReport;
+  onImageSelected?: (dataUrl: string, mimeType: string) => void;
+}) {
   if (report.blocked) {
-    return <BlockedNotice reason={report.reason} source={report.source} />;
+    return (
+      <BlockedNotice
+        reason={report.reason}
+        kind={report.kind}
+        source={report.source}
+        onImageSelected={onImageSelected}
+      />
+    );
   }
 
   const grouped = HEURISTICS.map((h) => ({

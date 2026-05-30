@@ -38,7 +38,7 @@ export function InputPanel({
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card p-5 md:p-6">
+    <div className="rounded-lg border border-border bg-card shadow-card p-5 md:p-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-base font-medium">New evaluation</h2>
         <span className="text-label">10 heuristics · 0–10 score</span>
@@ -66,7 +66,7 @@ export function InputPanel({
             <Button
               onClick={() => onAnalyze({ kind: "url", url })}
               disabled={loading || !url}
-              className="h-10 px-5"
+              className="h-10 px-5 cursor-pointer transition-colors"
             >
               {loading && <Loader2 className="size-4 animate-spin" />}
               Analyze
@@ -88,7 +88,7 @@ export function InputPanel({
                 const f = e.dataTransfer.files[0];
                 if (f) handleFile(f);
               }}
-              className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed border-border bg-[color:var(--surface)] px-6 py-10 text-center hover:border-foreground/30 transition-colors"
+              className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-border bg-[color:var(--surface)] px-6 py-12 text-center transition-colors hover:border-blue-400 hover:bg-blue-50"
             >
               <Upload className="size-5 text-muted-foreground" />
               <div className="text-sm font-medium">Drop your screenshot</div>
@@ -121,7 +121,7 @@ export function InputPanel({
               onAnalyze({ kind: "image", dataUrl: preview.dataUrl, mimeType: preview.mimeType })
             }
             disabled={loading || !preview}
-            className="h-10 w-full sm:w-auto px-5"
+            className="h-10 w-full sm:w-auto px-5 cursor-pointer transition-colors"
           >
             {loading && <Loader2 className="size-4 animate-spin" />}
             Analyze screenshot

@@ -35,10 +35,10 @@
 
 :root {
   --radius: 0.5rem;
-  /* CritLens — clean, audit-grade light theme */
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.18 0.005 250);          /* near-black #1A1A1A */
-  --surface: oklch(0.98 0.003 250);             /* #F8F9FA */
+  /* CritLens — polished audit-grade light theme */
+  --background: oklch(0.97 0.004 240);          /* #F4F6F8 */
+  --foreground: oklch(0.18 0.005 250);          /* #1A1A1A */
+  --surface: oklch(0.985 0.003 240);            /* #F8FAFC inset */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.18 0.005 250);
   --popover: oklch(1 0 0);
@@ -48,21 +48,27 @@
   --secondary: oklch(0.96 0.003 250);
   --secondary-foreground: oklch(0.18 0.005 250);
   --muted: oklch(0.96 0.003 250);
-  --muted-foreground: oklch(0.48 0.006 250);    /* secondary text */
+  --muted-foreground: oklch(0.5 0.01 250);      /* #6B7280 */
   --accent: oklch(0.96 0.003 250);
   --accent-foreground: oklch(0.18 0.005 250);
   --destructive: oklch(0.6 0.21 27);
   --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.9 0.004 250);               /* #E0E0E0 */
+  --border: oklch(0.91 0.004 250);              /* #E5E7EB */
   --input: oklch(0.9 0.004 250);
   --ring: oklch(0.6 0.1 240);
 
-  /* Severity scale — S1 green, S2 amber, S3 orange, S4 red. 0 = cosmetic gray */
+  /* Score color banding */
+  --score-red: oklch(0.6 0.22 27);
+  --score-amber: oklch(0.7 0.17 75);
+  --score-default: oklch(0.18 0.005 250);
+  --score-green: oklch(0.55 0.16 150);
+
+  /* Severity scale */
   --sev-0: oklch(0.6 0.01 250);
-  --sev-1: oklch(0.62 0.16 150);  /* green */
-  --sev-2: oklch(0.78 0.16 85);   /* amber */
-  --sev-3: oklch(0.7 0.18 55);    /* orange */
-  --sev-4: oklch(0.6 0.22 27);    /* red */
+  --sev-1: oklch(0.62 0.16 150);
+  --sev-2: oklch(0.78 0.16 85);
+  --sev-3: oklch(0.7 0.18 55);
+  --sev-4: oklch(0.6 0.22 27);
   --sev-0-bg: oklch(0.96 0.003 250);
   --sev-1-bg: oklch(0.96 0.04 150);
   --sev-2-bg: oklch(0.97 0.05 85);
@@ -71,11 +77,19 @@
 
   /* Evidence tag tints */
   --ev-observed: oklch(0.42 0.12 150);
-  --ev-observed-bg: oklch(0.96 0.04 150);
-  --ev-partial: oklch(0.52 0.14 75);
-  --ev-partial-bg: oklch(0.97 0.05 85);
+  --ev-observed-bg: oklch(0.95 0.05 150);
+  --ev-partial: oklch(0.5 0.14 75);
+  --ev-partial-bg: oklch(0.96 0.06 85);
   --ev-oos: oklch(0.45 0.005 250);
-  --ev-oos-bg: oklch(0.96 0.003 250);
+  --ev-oos-bg: oklch(0.94 0.003 250);
+
+  /* Warning surface (blocked notice) */
+  --warn-bg: oklch(0.985 0.04 90);              /* ~#FFFBEB */
+  --warn-border: oklch(0.75 0.15 80);
+
+  /* Card elevation tokens */
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-card-hover: 0 4px 12px rgba(0,0,0,0.09), 0 2px 4px rgba(0,0,0,0.06);
 }
 
 @layer base {
@@ -83,13 +97,20 @@
   html, body { background-color: var(--color-background); color: var(--color-foreground); }
   body {
     font-family: "Inter", "Roboto", system-ui, sans-serif;
-    font-size: 15px;
-    line-height: 1.6;
+    font-size: 14px;
+    line-height: 1.7;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  h1, h2, h3, h4, h5 { font-weight: 500; letter-spacing: -0.005em; }
-  .text-display { font-weight: 500; letter-spacing: -0.02em; }
-  .text-label { font-size: 12px; font-weight: 500; letter-spacing: 0.02em; color: var(--muted-foreground); }
+  h1, h2, h3, h4, h5 { font-weight: 600; letter-spacing: -0.01em; color: var(--foreground); }
+  .text-display { font-weight: 700; letter-spacing: -0.02em; }
+  .text-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
   .surface { background-color: var(--surface); }
+  .shadow-card { box-shadow: var(--shadow-card); }
 }
