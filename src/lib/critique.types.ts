@@ -44,19 +44,23 @@ export type HeuristicScore = {
   deductions: { severity: number; title: string }[];
 };
 
-export type CritiqueReport =
-  | {
-      blocked: true;
-      reason: string;
-      source: { kind: "url"; url: string } | { kind: "image" };
-    }
-  | {
-      blocked: false;
-      summary: string;
-      issues: Issue[];
-      heuristicScores: HeuristicScore[];
-      overallScore: number;
-      scoredCount: number;
-      topPriorities: Issue[];
-      source: { kind: "url"; url: string } | { kind: "image" };
-    };
+export type ReportSource = { kind: "url"; url: string } | { kind: "image" };
+
+export type BlockedReport = {
+  blocked: true;
+  reason: string;
+  source: ReportSource;
+};
+
+export type OkReport = {
+  blocked: false;
+  summary: string;
+  issues: Issue[];
+  heuristicScores: HeuristicScore[];
+  overallScore: number;
+  scoredCount: number;
+  topPriorities: Issue[];
+  source: ReportSource;
+};
+
+export type CritiqueReport = BlockedReport | OkReport;
