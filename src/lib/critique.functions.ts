@@ -6,7 +6,7 @@ import {
   type HeuristicScore,
   type Issue,
 } from "./critique.types";
-import { HEURISTICS, SEVERITY_DEDUCTION } from "./heuristics";
+import { HEURISTICS, SEVERITY_DEDUCTION, SEVERITY_SCORE_CAP } from "./heuristics";
 
 const InputSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("url"), url: z.string().url() }),
@@ -71,16 +71,29 @@ const BLOCK_PATTERNS: { rx: RegExp; reason: string }[] = [
   { rx: /<title>\s*(403|404|500|502|503|504)/i, reason: "HTTP error page returned as content" },
 ];
 
-async function fetchUrlText(url: string): Promise<FetchResult> {
+const BROWSER_UA =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+
+async function fetchViaProxyOnce(url: string): Promise<FetchResult> {
   try {
-    const res = await fetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; CritLensBot/1.0)" },
+    const proxied = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    const res = await fetch(proxied, {
+      headers: {
+        "User-Agent": BROWSER_UA,
+        Accept: "application/json,text/html;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
       redirect: "follow",
     });
     if (!res.ok) {
-      return { ok: false, reason: `HTTP ${res.status} ${res.statusText || ""} returned by the URL`.trim() };
+      return { ok: false, reason: `Proxy responded ${res.status} ${res.statusText || ""}`.trim() };
     }
-    const html = await res.text();
+    const payload = (await res.json()) as { contents?: string; status?: { http_code?: number } };
+    const httpCode = payload.status?.http_code ?? 200;
+    if (httpCode >= 400) {
+      return { ok: false, reason: `Origin returned HTTP ${httpCode}` };
+    }
+    const html = payload.contents ?? "";
     const cleaned = html
       .replace(/<script[\s\S]*?<\/script>/gi, " ")
       .replace(/<style[\s\S]*?<\/style>/gi, " ")
@@ -91,13 +104,21 @@ async function fetchUrlText(url: string): Promise<FetchResult> {
     for (const { rx, reason } of BLOCK_PATTERNS) {
       if (rx.test(html) || rx.test(cleaned)) return { ok: false, reason };
     }
-    if (cleaned.length < 80) {
-      return { ok: false, reason: "Page returned almost no readable content (likely client-rendered, gated, or empty)" };
+    if (cleaned.length < 500) {
+      return { ok: false, reason: "Fetched page returned almost no readable content" };
     }
     return { ok: true, text: cleaned.slice(0, 12000) };
   } catch (e) {
-    return { ok: false, reason: `Network error fetching URL: ${(e as Error).message}` };
+    return { ok: false, reason: `Network error: ${(e as Error).message}` };
   }
+}
+
+async function fetchUrlText(url: string): Promise<FetchResult> {
+  const first = await fetchViaProxyOnce(url);
+  if (first.ok) return first;
+  await new Promise((r) => setTimeout(r, 2000));
+  const second = await fetchViaProxyOnce(url);
+  return second;
 }
 
 function extractJson(text: string): unknown {
@@ -135,12 +156,31 @@ function computeReport(
     else evidence = "Out of scope";
 
     if (evidence === "Out of scope") {
-      return { id: h.id, name: h.name, score: null, evidence, deductions };
+      return {
+        id: h.id,
+        name: h.name,
+        score: null,
+        evidence,
+        note: evalEntry?.note ?? "Insufficient observable evidence in the loaded interface.",
+        deductions,
+      };
     }
     const totalDed = its.reduce((s, i) => s + (SEVERITY_DEDUCTION[i.severity] ?? 0), 0);
     let score = Math.max(0, Math.min(10, 10 - totalDed));
-    if (its.length > 0 && score >= 8) score = 7.5; // Rule 3
-    return { id: h.id, name: h.name, score: Math.round(score * 10) / 10, evidence, deductions };
+    // Rule 3 — tightened: cap by the most severe finding under this heuristic.
+    if (its.length > 0) {
+      const maxSev = its.reduce((m, i) => Math.max(m, i.severity), 0);
+      const cap = SEVERITY_SCORE_CAP[maxSev] ?? 7.5;
+      if (score > cap) score = cap;
+    }
+    return {
+      id: h.id,
+      name: h.name,
+      score: Math.round(score * 10) / 10,
+      evidence,
+      note: evalEntry?.note,
+      deductions,
+    };
   });
 
   const scored = heuristicScores.filter(
@@ -206,7 +246,12 @@ export const analyzeDesign = createServerFn({ method: "POST" })
     if (data.kind === "url") {
       const fetched = await fetchUrlText(data.url);
       if (!fetched.ok) {
-        return { blocked: true, reason: fetched.reason, source: { kind: "url", url: data.url } };
+        return {
+          blocked: true,
+          kind: "fetch_failed",
+          reason: fetched.reason,
+          source: { kind: "url", url: data.url },
+        };
       }
       content = [
         {
