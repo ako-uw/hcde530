@@ -17,9 +17,10 @@ export function HeuristicBreakdown({ scores }: { scores: HeuristicScore[] }) {
       </div>
       <ul className="divide-y divide-border">
         {scores.map((h) => {
-          const oos = h.score === null;
-          const pct = oos ? 0 : (h.score! / 10) * 100;
-          const color = oos ? "var(--ev-oos)" : barColor(h.score!);
+          const score = h.score;
+          const oos = score === null;
+          const pct = score === null ? 0 : (score / 10) * 100;
+          const color = score === null ? "var(--ev-oos)" : barColor(score);
           return (
             <li key={h.id} className="grid grid-cols-[1fr_auto] items-center gap-4 px-5 py-3.5">
               <div className="min-w-0">
@@ -47,7 +48,7 @@ export function HeuristicBreakdown({ scores }: { scores: HeuristicScore[] }) {
                   className="w-12 text-right text-base tabular-nums font-medium"
                   style={{ color: oos ? "var(--muted-foreground)" : "var(--foreground)" }}
                 >
-                  {oos ? "—" : h.score!.toFixed(1)}
+                  {score === null ? "—" : score.toFixed(1)}
                 </span>
               </div>
             </li>
