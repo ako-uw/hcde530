@@ -41,7 +41,7 @@ export function InputPanel({
     <div className="rounded-lg border border-border bg-card shadow-card p-5 md:p-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-base font-medium">New evaluation</h2>
-        <span className="text-label">10 heuristics · 0–10 score</span>
+        <span className="text-label">Nielsen's 10 heuristics</span>
       </div>
       <Tabs defaultValue="url">
         <TabsList className="bg-[color:var(--surface)]">
