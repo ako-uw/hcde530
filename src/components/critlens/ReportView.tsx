@@ -1,6 +1,6 @@
 import type { CritiqueReport, Issue, OkReport } from "@/lib/critique.types";
 import { HEURISTICS } from "@/lib/heuristics";
-import { ScoreHero } from "./ScoreHero";
+import { StatsOverview } from "./StatsOverview";
 import { HeuristicBreakdown } from "./HeuristicBreakdown";
 import { IssueCard } from "./IssueCard";
 import { BlockedNotice } from "./BlockedNotice";
@@ -11,27 +11,28 @@ import { toast } from "sonner";
 function toMarkdown(r: OkReport): string {
   const lines: string[] = [];
   const unscored = r.heuristicScores.filter((h) => h.score === null);
+  const sev = { 1: 0, 2: 0, 3: 0, 4: 0 } as Record<number, number>;
+  for (const i of r.issues) if (sev[i.severity] !== undefined) sev[i.severity]++;
   lines.push(`# CritLens UX Report`);
   lines.push("");
-  lines.push(
-    `**Overall score:** ${r.overallScore.toFixed(1)} / 10 (based on ${r.scoredCount} of 10 heuristics scored).`,
-  );
-  if (unscored.length > 0) {
-    lines.push(
-      `_${unscored.length} heuristic${unscored.length === 1 ? "" : "s"} not scored — insufficient observable evidence._`,
-    );
-  }
+  lines.push(`**Heuristics observed:** ${r.scoredCount} / 10`);
+  lines.push(`**Issues found:** ${r.issues.length}`);
+  lines.push(`**Severity:** S4 ${sev[4]} · S3 ${sev[3]} · S2 ${sev[2]} · S1 ${sev[1]}`);
+  lines.push(`**Out of scope:** ${unscored.length}`);
   lines.push("");
   lines.push(`## Summary`);
   lines.push(r.summary);
   lines.push("");
   lines.push(`## Scoring breakdown`);
   r.heuristicScores.forEach((h) => {
-    const s =
+    const findings = h.deductions.length;
+    const status =
       h.score === null
-        ? `— (Out of scope — ${h.note ?? "insufficient evidence"})`
-        : `${h.score.toFixed(1)} / 10 — Evidence: ${h.evidence}`;
-    lines.push(`- **H${h.id} ${h.name}** — ${s}`);
+        ? `Out of scope — ${h.note ?? "insufficient evidence"}`
+        : findings === 0
+          ? "No violations observed."
+          : `${findings} finding${findings === 1 ? "" : "s"} · Evidence: ${h.evidence}`;
+    lines.push(`- **H${h.id} ${h.name}** — ${status}`);
   });
   lines.push("");
   if (unscored.length > 0) {
@@ -97,18 +98,14 @@ export function ReportView({
   })).filter((g) => g.issues.length > 0);
 
   return (
-    <div className="space-y-8">
-      <ScoreHero
-        score={report.overallScore}
-        scoredCount={report.scoredCount}
-        summary={report.summary}
-      />
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="text-label">
-          {report.issues.length} findings · {report.scoredCount}/10 heuristics scored
-        </div>
-        <div className="flex flex-wrap gap-2">
+    <div className="space-y-10">
+      <section className="space-y-4">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <div className="text-label">Evaluation summary</div>
+            <h2 className="mt-1 text-xl font-semibold">At a glance</h2>
+          </div>
+          <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -128,8 +125,14 @@ export function ReportView({
           >
             <Download className="size-3.5" /> Export JSON
           </Button>
+          </div>
         </div>
-      </div>
+        <StatsOverview report={report} />
+        <div className="rounded-xl border border-border bg-card p-5 shadow-card md:p-6">
+          <div className="text-label mb-2">Summary</div>
+          <p className="max-w-3xl text-[15px] leading-[1.75] text-foreground/90">{report.summary}</p>
+        </div>
+      </section>
 
       {report.topPriorities.length > 0 && (
         <section className="space-y-3">
@@ -147,7 +150,7 @@ export function ReportView({
 
       <section id="heuristics" className="space-y-3">
         <div className="flex items-end justify-between border-b border-border pb-2">
-          <h3 className="text-lg font-medium">Scoring breakdown</h3>
+          <h3 className="text-lg font-medium">Heuristic breakdown</h3>
           <span className="text-label">10 heuristics</span>
         </div>
         <HeuristicBreakdown scores={report.heuristicScores} />
