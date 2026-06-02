@@ -3,26 +3,30 @@ import { EvidenceBadge } from "./EvidenceBadge";
 
 export function HeuristicBreakdown({ scores }: { scores: HeuristicScore[] }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card shadow-card">
+    <div className="overflow-hidden border border-border bg-card">
       <ul className="divide-y divide-border">
         {scores.map((h) => {
           const oos = h.score === null;
           const findings = h.deductions.length;
           const status = oos
-            ? h.note ?? "Insufficient observable evidence."
+            ? h.note ?? "Not observable from this artifact."
             : findings === 0
-              ? "No violations observed."
+              ? "No violations observed"
               : `${findings} finding${findings === 1 ? "" : "s"}`;
           return (
             <li
               key={h.id}
-              className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-4 px-5 py-4 transition-colors hover:bg-[color:var(--surface)]"
+              className="grid grid-cols-[3rem_1fr_auto] items-center gap-4 px-5 py-4 transition-colors hover:bg-[color:var(--surface)]"
             >
-              <span className="text-label text-foreground/70">H{h.id}</span>
+              <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-foreground/50 tabular-nums">
+                H{String(h.id).padStart(2, "0")}
+              </span>
               <div className="min-w-0">
-                <div className="text-sm font-medium text-foreground">{h.name}</div>
+                <div className="font-display text-[17px] leading-snug text-foreground">
+                  {h.name}
+                </div>
                 <div
-                  className={`mt-0.5 text-xs ${oos ? "italic text-muted-foreground" : findings === 0 ? "text-[color:var(--ev-observed)]" : "text-foreground/70"}`}
+                  className={`mt-1 text-[12.5px] ${oos ? "italic text-muted-foreground" : findings === 0 ? "text-[color:var(--ev-observed)]" : "text-foreground/70"}`}
                 >
                   {status}
                 </div>
