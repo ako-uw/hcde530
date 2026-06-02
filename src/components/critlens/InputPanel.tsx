@@ -38,17 +38,17 @@ export function InputPanel({
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card shadow-card p-5 md:p-6">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-base font-medium">New evaluation</h2>
-        <span className="text-label">Nielsen's 10 heuristics</span>
+    <div className="border border-border bg-card p-6 md:p-8">
+      <div className="mb-5 flex items-center justify-between border-b border-border pb-3">
+        <h2 className="font-display text-[20px] leading-none">New evaluation</h2>
+        <span className="text-label">Nielsen 10</span>
       </div>
       <Tabs defaultValue="url">
-        <TabsList className="bg-[color:var(--surface)]">
-          <TabsTrigger value="url">
+        <TabsList className="rounded-none bg-[color:var(--surface)]">
+          <TabsTrigger value="url" className="rounded-none font-mono text-[11px] uppercase tracking-[0.12em]">
             <Link2 className="size-3.5" /> URL
           </TabsTrigger>
-          <TabsTrigger value="image">
+          <TabsTrigger value="image" className="rounded-none font-mono text-[11px] uppercase tracking-[0.12em]">
             <Upload className="size-3.5" /> Screenshot
           </TabsTrigger>
         </TabsList>
@@ -57,24 +57,24 @@ export function InputPanel({
           <div className="flex flex-col gap-2 sm:flex-row">
             <Input
               type="url"
-              placeholder="https://your-product.com"
+              placeholder="https://example.com"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               disabled={loading}
-              className="h-10"
+              className="h-11 rounded-none"
             />
             <Button
               onClick={() => onAnalyze({ kind: "url", url })}
               disabled={loading || !url}
-              className="h-10 px-5 cursor-pointer transition-colors"
+              className="h-11 cursor-pointer rounded-none px-6 font-mono text-[11px] uppercase tracking-[0.14em]"
             >
               {loading && <Loader2 className="size-4 animate-spin" />}
-              Analyze
+              Evaluate
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Public pages only. JS-heavy sites may critique partial content; if the page is gated by
-            a CDN challenge or queue, the evaluation will be blocked rather than scored.
+          <p className="text-[12.5px] leading-relaxed text-muted-foreground">
+            Public pages only. Sites behind login walls, queues, or CDN challenges get
+            blocked rather than scored — drop a screenshot in that case.
           </p>
         </TabsContent>
 
@@ -88,11 +88,13 @@ export function InputPanel({
                 const f = e.dataTransfer.files[0];
                 if (f) handleFile(f);
               }}
-              className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-border bg-[color:var(--surface)] px-6 py-12 text-center transition-colors hover:border-blue-400 hover:bg-blue-50"
+              className="flex cursor-pointer flex-col items-center justify-center gap-2 border border-dashed border-border bg-[color:var(--surface)] px-6 py-14 text-center transition-colors hover:border-foreground"
             >
               <Upload className="size-5 text-muted-foreground" />
               <div className="text-sm font-medium">Drop your screenshot</div>
-              <div className="text-xs text-muted-foreground">PNG · JPG · WEBP — max 5MB</div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                PNG · JPG · WEBP — max 5 MB
+              </div>
               <input
                 ref={fileRef}
                 type="file"
@@ -105,11 +107,11 @@ export function InputPanel({
               />
             </div>
           ) : (
-            <div className="relative overflow-hidden rounded-md border border-border">
+            <div className="relative overflow-hidden border border-border">
               <img src={preview.dataUrl} alt={preview.name} className="max-h-80 w-full object-contain bg-[color:var(--surface)]" />
               <button
                 onClick={() => setPreview(null)}
-                className="absolute right-2 top-2 rounded-full bg-white p-1.5 border border-border hover:bg-[color:var(--surface)]"
+                className="absolute right-2 top-2 bg-white p-1.5 border border-border hover:bg-[color:var(--surface)]"
               >
                 <X className="size-3.5" />
               </button>
@@ -121,10 +123,10 @@ export function InputPanel({
               onAnalyze({ kind: "image", dataUrl: preview.dataUrl, mimeType: preview.mimeType })
             }
             disabled={loading || !preview}
-            className="h-10 w-full sm:w-auto px-5 cursor-pointer transition-colors"
+            className="h-11 w-full cursor-pointer rounded-none px-6 font-mono text-[11px] uppercase tracking-[0.14em] sm:w-auto"
           >
             {loading && <Loader2 className="size-4 animate-spin" />}
-            Analyze screenshot
+            Evaluate screenshot
           </Button>
         </TabsContent>
       </Tabs>
