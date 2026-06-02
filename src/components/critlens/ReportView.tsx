@@ -4,6 +4,7 @@ import { StatsOverview } from "./StatsOverview";
 import { HeuristicBreakdown } from "./HeuristicBreakdown";
 import { IssueCard } from "./IssueCard";
 import { BlockedNotice } from "./BlockedNotice";
+import { Legend } from "./Legend";
 import { Button } from "@/components/ui/button";
 import { Download, Copy } from "lucide-react";
 import { toast } from "sonner";
@@ -77,9 +78,11 @@ function download(filename: string, content: string, mime: string) {
 export function ReportView({
   report,
   onImageSelected,
+  onNewEvaluation,
 }: {
   report: CritiqueReport;
   onImageSelected?: (dataUrl: string, mimeType: string) => void;
+  onNewEvaluation?: () => void;
 }) {
   if (report.blocked) {
     return (
@@ -98,46 +101,51 @@ export function ReportView({
   })).filter((g) => g.issues.length > 0);
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-14">
       <section className="space-y-4">
-        <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-3">
           <div>
-            <div className="text-label">Evaluation summary</div>
-            <h2 className="mt-1 text-xl font-semibold">At a glance</h2>
+            <div className="text-label">Report</div>
+            <h2 className="font-display mt-1 text-[28px] leading-tight">At a glance</h2>
           </div>
           <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              navigator.clipboard.writeText(toMarkdown(report));
-              toast.success("Markdown copied");
-            }}
-          >
-            <Copy className="size-3.5" /> Copy as Markdown
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              download("critlens-report.json", JSON.stringify(report, null, 2), "application/json")
-            }
-          >
-            <Download className="size-3.5" /> Export JSON
-          </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-none font-mono text-[10px] uppercase tracking-[0.12em]"
+              onClick={() => {
+                navigator.clipboard.writeText(toMarkdown(report));
+                toast.success("Markdown copied");
+              }}
+            >
+              <Copy className="size-3.5" /> Markdown
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-none font-mono text-[10px] uppercase tracking-[0.12em]"
+              onClick={() =>
+                download("critlens-report.json", JSON.stringify(report, null, 2), "application/json")
+              }
+            >
+              <Download className="size-3.5" /> JSON
+            </Button>
           </div>
         </div>
         <StatsOverview report={report} />
-        <div className="rounded-xl border border-border bg-card p-5 shadow-card md:p-6">
-          <div className="text-label mb-2">Summary</div>
-          <p className="max-w-3xl text-[15px] leading-[1.75] text-foreground/90">{report.summary}</p>
+        <div className="border border-border bg-card p-6 md:p-8">
+          <div className="text-label mb-3">Summary</div>
+          <p className="font-display max-w-3xl text-[20px] leading-[1.45] text-foreground/90 md:text-[22px]">
+            {report.summary}
+          </p>
         </div>
+        <Legend />
       </section>
 
       {report.topPriorities.length > 0 && (
         <section className="space-y-3">
-          <div className="flex items-end justify-between border-b border-border pb-2">
-            <h3 className="text-lg font-medium">Top priorities</h3>
+          <div className="flex items-end justify-between border-b border-border pb-3">
+            <h3 className="font-display text-[22px] leading-none">Top priorities</h3>
             <span className="text-label">Fix first</span>
           </div>
           <div className="grid gap-3 md:grid-cols-3">
@@ -149,16 +157,16 @@ export function ReportView({
       )}
 
       <section id="heuristics" className="space-y-3">
-        <div className="flex items-end justify-between border-b border-border pb-2">
-          <h3 className="text-lg font-medium">Heuristic breakdown</h3>
+        <div className="flex items-end justify-between border-b border-border pb-3">
+          <h3 className="font-display text-[22px] leading-none">Heuristic breakdown</h3>
           <span className="text-label">10 heuristics</span>
         </div>
         <HeuristicBreakdown scores={report.heuristicScores} />
       </section>
 
       <section className="space-y-5">
-        <div className="flex items-end justify-between border-b border-border pb-2">
-          <h3 className="text-lg font-medium">All findings</h3>
+        <div className="flex items-end justify-between border-b border-border pb-3">
+          <h3 className="font-display text-[22px] leading-none">All findings</h3>
           <span className="text-label">{report.issues.length} total</span>
         </div>
         {grouped.map(({ h, issues }) => (
@@ -175,6 +183,18 @@ export function ReportView({
           </div>
         ))}
       </section>
+
+      {onNewEvaluation && (
+        <section className="flex flex-col items-start gap-3 border-t border-border pt-8">
+          <div className="text-label">Done reading?</div>
+          <button
+            onClick={onNewEvaluation}
+            className="inline-flex h-11 cursor-pointer items-center rounded-none border border-foreground bg-foreground px-5 font-mono text-[11px] uppercase tracking-[0.14em] text-background transition-colors hover:bg-background hover:text-foreground"
+          >
+            Start a new evaluation
+          </button>
+        </section>
+      )}
     </div>
   );
 }
