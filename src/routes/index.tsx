@@ -1,105 +1,61 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
-import { Loader2, ScanSearch } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
-import { analyzeDesign } from "@/lib/critique.functions";
-import type { CritiqueReport } from "@/lib/critique.types";
-import { InputPanel, type AnalysisInput } from "@/components/critlens/InputPanel";
+import { InputPanel } from "@/components/critlens/InputPanel";
 import { ReportView } from "@/components/critlens/ReportView";
+import { useCritique } from "@/lib/critique-context";
 
 export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
     meta: [
-      { title: "CritLens — Nielsen heuristic evaluation for designers" },
+      { title: "CritLens — Heuristic evaluation for designers" },
       {
         name: "description",
         content:
-          "Structured UX audits scored against Nielsen's 10 usability heuristics. Built for designers and UX managers.",
+          "Run a heuristic evaluation against Nielsen's ten usability principles. Counts, severities, and evidence tags — no inflated grades.",
       },
     ],
   }),
 });
 
 function Index() {
-  const analyzeFn = useServerFn(analyzeDesign);
-  const [report, setReport] = useState<CritiqueReport | null>(null);
-
-  const mutation = useMutation({
-    mutationFn: (input: AnalysisInput) => analyzeFn({ data: input }),
-    onSuccess: (data) => setReport(data),
-  });
-
-  function runAnalyze(input: AnalysisInput) {
-    setReport(null);
-    mutation.mutate(input);
-  }
+  const { report, isPending, isError, error, runAnalyze, reset } = useCritique();
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div>
       <Toaster />
-      <header className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-3.5 md:px-8">
-          <div className="flex items-center gap-2.5">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-foreground text-background shadow-card">
-              <ScanSearch className="size-4" />
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-[15px] font-semibold tracking-tight">CritLens</span>
-              <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">Audit</span>
-            </div>
-          </div>
-          <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
-            <a href="#heuristics" className="hover:text-foreground transition-colors">Heuristics</a>
-            <a href="#methodology" className="hover:text-foreground transition-colors">Methodology</a>
-            <a
-              href="https://www.nngroup.com/articles/ten-usability-heuristics/"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-foreground transition-colors"
-            >
-              NNG reference ↗
-            </a>
-          </nav>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-5xl space-y-8 px-5 py-8 md:px-8 md:py-10" style={{ rowGap: 32 }}>
+      <div className="mx-auto max-w-5xl space-y-10 px-6 py-10 md:px-10 md:py-16">
         {!report && (
-          <section className="space-y-4 pt-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-[11px] font-medium text-muted-foreground shadow-card">
-              <span className="size-1.5 rounded-full bg-[color:var(--ev-observed)]" />
-              Evidence-based UX audits
-            </span>
-            <h1 className="text-display text-[30px] md:text-[40px] leading-[1.1] max-w-3xl">
-              Structured heuristic evaluation,<br className="hidden md:inline" />
-              <span className="text-muted-foreground">honest about what it can see.</span>
+          <section className="border-b border-border pb-10">
+            <div className="text-label">Heuristic evaluation</div>
+            <h1 className="font-display mt-3 text-[44px] leading-[1.05] tracking-tight md:text-[64px]">
+              Read an interface,<br className="hidden md:inline" />
+              <span className="italic text-foreground/70">like a practitioner would.</span>
             </h1>
-            <p className="max-w-2xl text-[15px] leading-[1.75] text-muted-foreground">
-              Submit a URL or screenshot. CritLens audits the interface against Nielsen's 10
-              usability heuristics, tags every finding with evidence, and leaves anything it
-              couldn't observe out of scope — no inflated grades.
+            <p className="mt-5 max-w-xl text-[16px] leading-[1.7] text-foreground/80">
+              Paste a URL or drop a screenshot. CritLens walks the interface against
+              Nielsen's ten heuristics, tags every finding with the evidence it had,
+              and leaves the rest out of scope.
             </p>
           </section>
         )}
 
-        <InputPanel loading={mutation.isPending} onAnalyze={runAnalyze} />
+        <InputPanel loading={isPending} onAnalyze={runAnalyze} />
 
-        {mutation.isPending && (
-          <div className="flex items-center gap-3 rounded-xl border border-border bg-card shadow-card px-5 py-4 text-sm text-foreground/80">
-            <Loader2 className="size-4 animate-spin text-foreground/70" />
+        {isPending && (
+          <div className="flex items-center gap-3 border border-border bg-card px-5 py-4 text-sm text-foreground/80">
+            <Loader2 className="size-4 animate-spin text-foreground/60" />
             <span>
-              Running heuristic evaluation…{" "}
-              <span className="text-muted-foreground">typically 20–40 seconds.</span>
+              Reading the interface…{" "}
+              <span className="text-muted-foreground">usually 20–40 seconds.</span>
             </span>
           </div>
         )}
 
-        {mutation.isError && (
-          <div className="rounded-xl border border-[color:var(--sev-4)]/40 bg-[color:var(--sev-4-bg)] shadow-card px-5 py-4 text-sm text-foreground">
-            {(mutation.error as Error).message || "Analysis failed."}
+        {isError && (
+          <div className="border border-[color:var(--sev-4)]/40 bg-[color:var(--sev-4-bg)] px-5 py-4 text-sm text-foreground">
+            {error?.message || "Evaluation failed."}
           </div>
         )}
 
@@ -109,63 +65,10 @@ function Index() {
             onImageSelected={(dataUrl, mimeType) =>
               runAnalyze({ kind: "image", dataUrl, mimeType })
             }
+            onNewEvaluation={reset}
           />
         )}
-
-        {!report && !mutation.isPending && <Methodology />}
-      </main>
-
-      <footer className="border-t border-border">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-5 py-5 md:px-8 text-xs text-muted-foreground">
-          <span>© CritLens — Structured UX audits.</span>
-          <span>Method: Nielsen's 10 Usability Heuristics</span>
-        </div>
-      </footer>
+      </div>
     </div>
-  );
-}
-
-function Methodology() {
-  const rows = [
-    {
-      t: "Page-load verification",
-      d: "If the URL returns an error, redirect loop, queue, or CDN challenge, the evaluation is blocked rather than scored against infrastructure behavior.",
-    },
-    {
-      t: "Evidence tagging",
-      d: "Every finding and heuristic carries an evidence tag — Observed, Partial, or Out of scope. Out-of-scope heuristics are counted separately, not folded into a grade.",
-    },
-    {
-      t: "No inflated grades",
-      d: "CritLens reports raw counts — heuristics observed, issues found, severity breakdown — instead of an averaged score that hides what wasn't seen.",
-    },
-    {
-      t: "Infrastructure separation",
-      d: "Server errors, CDN behavior, URL parameters, and queueing systems are never mapped to NNG heuristics.",
-    },
-  ];
-  return (
-    <section id="methodology" className="space-y-4">
-      <div className="flex items-end justify-between border-b border-border pb-2">
-        <h2 className="text-lg font-medium">Methodology</h2>
-        <span className="text-label">Integrity rules</span>
-      </div>
-      <div className="grid gap-3 md:grid-cols-2">
-        {rows.map((r, idx) => (
-          <div
-            key={r.t}
-            className="group rounded-xl border border-border bg-card p-5 shadow-card transition-shadow hover:shadow-[var(--shadow-card-hover)]"
-          >
-            <div className="flex items-center gap-3">
-              <span className="flex size-6 items-center justify-center rounded-md bg-[color:var(--surface)] text-[11px] font-semibold tabular-nums text-muted-foreground">
-                {String(idx + 1).padStart(2, "0")}
-              </span>
-              <div className="text-sm font-semibold text-foreground">{r.t}</div>
-            </div>
-            <p className="mt-2.5 text-sm text-muted-foreground leading-[1.7]">{r.d}</p>
-          </div>
-        ))}
-      </div>
-    </section>
   );
 }
