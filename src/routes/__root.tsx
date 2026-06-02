@@ -9,6 +9,9 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import { CritiqueProvider } from "@/lib/critique-context";
+import { SiteHeader } from "@/components/critlens/SiteHeader";
+import { SiteFooter } from "@/components/critlens/SiteFooter";
 
 function NotFoundComponent() {
   return (
@@ -72,14 +75,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "CritLens — Heuristic evaluation for designers" },
+      {
+        name: "description",
+        content:
+          "CritLens runs a structured heuristic evaluation against Nielsen's ten usability principles. Built for people who do UX work.",
+      },
+      { property: "og:title", content: "CritLens — Heuristic evaluation for designers" },
+      {
+        property: "og:description",
+        content:
+          "A heuristic evaluation tool. Counts, severities, and evidence tags — no inflated grades.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
@@ -90,7 +99,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Roboto:wght@400;500&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap",
       },
     ],
   }),
@@ -119,7 +128,15 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <CritiqueProvider>
+        <div className="flex min-h-screen flex-col bg-background text-foreground">
+          <SiteHeader />
+          <main className="flex-1">
+            <Outlet />
+          </main>
+          <SiteFooter />
+        </div>
+      </CritiqueProvider>
     </QueryClientProvider>
   );
 }
