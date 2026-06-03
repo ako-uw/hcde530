@@ -74,33 +74,40 @@ const BLOCK_PATTERNS: { rx: RegExp; reason: string }[] = [
 const BROWSER_UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-async function fetchViaProxyOnce(url: string): Promise<FetchResult> {
+const PROXIES: { name: string; build: (u: string) => string }[] = [
+  { name: "codetabs", build: (u) => `https://api.codetabs.com/v1/proxy?quest=${u}` },
+  { name: "thingproxy", build: (u) => `https://thingproxy.freeboard.io/fetch/${u}` },
+  { name: "corsproxy", build: (u) => `https://corsproxy.io/?${encodeURIComponent(u)}` },
+];
+
+function cleanHtml(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+async function tryProxy(proxyUrl: string): Promise<FetchResult> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 10_000);
   try {
-    const proxied = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-    const res = await fetch(proxied, {
+    const res = await fetch(proxyUrl, {
       headers: {
         "User-Agent": BROWSER_UA,
-        Accept: "application/json,text/html;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
       },
       redirect: "follow",
+      signal: ctrl.signal,
     });
     if (!res.ok) {
-      return { ok: false, reason: `Proxy responded ${res.status} ${res.statusText || ""}`.trim() };
+      return { ok: false, reason: `Proxy responded ${res.status}` };
     }
-    const payload = (await res.json()) as { contents?: string; status?: { http_code?: number } };
-    const httpCode = payload.status?.http_code ?? 200;
-    if (httpCode >= 400) {
-      return { ok: false, reason: `Origin returned HTTP ${httpCode}` };
-    }
-    const html = payload.contents ?? "";
-    const cleaned = html
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
+    const html = await res.text();
+    const cleaned = cleanHtml(html);
     for (const { rx, reason } of BLOCK_PATTERNS) {
       if (rx.test(html) || rx.test(cleaned)) return { ok: false, reason };
     }
@@ -109,16 +116,21 @@ async function fetchViaProxyOnce(url: string): Promise<FetchResult> {
     }
     return { ok: true, text: cleaned.slice(0, 12000) };
   } catch (e) {
-    return { ok: false, reason: `Network error: ${(e as Error).message}` };
+    const msg = (e as Error).name === "AbortError" ? "Timed out after 10s" : (e as Error).message;
+    return { ok: false, reason: `Network error: ${msg}` };
+  } finally {
+    clearTimeout(timer);
   }
 }
 
 async function fetchUrlText(url: string): Promise<FetchResult> {
-  const first = await fetchViaProxyOnce(url);
-  if (first.ok) return first;
-  await new Promise((r) => setTimeout(r, 2000));
-  const second = await fetchViaProxyOnce(url);
-  return second;
+  let lastReason = "All proxies failed";
+  for (const p of PROXIES) {
+    const result = await tryProxy(p.build(url));
+    if (result.ok) return result;
+    lastReason = `${p.name}: ${result.reason}`;
+  }
+  return { ok: false, reason: lastReason };
 }
 
 function extractJson(text: string): unknown {
