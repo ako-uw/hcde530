@@ -44,7 +44,7 @@ export function StatsOverview({ report }: { report: OkReport }) {
   ];
 
   return (
-    <div className="grid gap-px overflow-hidden border-2 border-[color:var(--border-strong)] bg-[color:var(--border-strong)] shadow-[4px_4px_0_0_var(--border-strong)] md:grid-cols-4 md:grid-rows-[auto]">
+    <div className="grid gap-px overflow-hidden border-2 border-[color:var(--border-strong)] bg-[color:var(--border-strong)] shadow-[4px_4px_0_0_var(--border-strong)] md:grid-cols-3">
       <Metric
         label="Heuristics observed"
         target={report.scoredCount}
@@ -52,7 +52,8 @@ export function StatsOverview({ report }: { report: OkReport }) {
         accent="primary"
       />
       <Metric label="Issues found" target={report.issues.length} accent="warm" />
-      <div className="bg-[color:var(--card)] p-6 md:col-span-2">
+      <Metric label="Out of scope" target={oos} suffix="heuristics" accent="muted" />
+      <div className="bg-[color:var(--card)] p-6 md:col-span-3">
         <div className="flex items-center justify-between">
           <div className="text-label">Severity breakdown</div>
           <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
@@ -89,15 +90,8 @@ export function StatsOverview({ report }: { report: OkReport }) {
           </div>
         </TooltipProvider>
       </div>
-      <Metric label="Out of scope" target={oos} suffix="heuristics" accent="muted" />
-      <Metric label="Top severity" target={topSev(sev)} suffix="max" accent="severity" />
     </div>
   );
-}
-
-function topSev(sev: Record<1 | 2 | 3 | 4, number>): number {
-  for (const k of [4, 3, 2, 1] as const) if (sev[k] > 0) return k;
-  return 0;
 }
 
 function SevCount({ n, colorVar }: { n: number; colorVar: string }) {
