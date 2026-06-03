@@ -23,6 +23,7 @@ export function InputPanel({
 }) {
   const [url, setUrl] = useState("");
   const [preview, setPreview] = useState<{ dataUrl: string; mimeType: string; name: string } | null>(null);
+  const [dragging, setDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function handleFile(file: File) {
@@ -33,11 +34,6 @@ export function InputPanel({
     const dataUrl = await readFileAsDataUrl(file);
     setPreview({ dataUrl, mimeType: file.type, name: file.name });
   }
-
-  const [url, setUrl] = useState("");
-  const [preview, setPreview] = useState<{ dataUrl: string; mimeType: string; name: string } | null>(null);
-  const [dragging, setDragging] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   function onSubmit() {
     if (loading) return;
