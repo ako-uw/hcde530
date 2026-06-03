@@ -115,7 +115,7 @@ function Metric({
   label: string;
   target: number;
   suffix?: string;
-  accent?: "primary" | "warm" | "muted" | "severity" | "default";
+  accent?: "primary" | "warm" | "muted" | "default";
 }) {
   const v = useCountUp(target);
   const color =
@@ -123,9 +123,7 @@ function Metric({
       ? "var(--primary)"
       : accent === "warm"
         ? "var(--accent-warm)"
-        : accent === "severity"
-          ? `var(--severity-s${Math.max(1, target) as 1 | 2 | 3 | 4})`
-          : "var(--foreground)";
+        : "var(--foreground)";
   return (
     <div className="relative bg-[color:var(--card)] p-6">
       <div className="text-label">{label}</div>
