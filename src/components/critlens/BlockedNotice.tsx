@@ -44,12 +44,11 @@ export function BlockedNotice({
 
   return (
     <div
-      className="rounded-lg shadow-card p-6"
+      className="cl-slide-in p-6 shadow-[4px_4px_0_0_var(--border-strong)]"
       style={{
         background: "var(--warn-bg)",
-        borderLeft: "4px solid var(--warn-border)",
-        border: "1px solid var(--border)",
-        borderLeftWidth: "4px",
+        border: "2px solid var(--border-strong)",
+        borderLeftWidth: "6px",
         borderLeftColor: "var(--warn-border)",
       }}
     >
