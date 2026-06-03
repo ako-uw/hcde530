@@ -3,37 +3,44 @@ import type { Issue } from "@/lib/critique.types";
 import { SeverityBadge, severityVar } from "./SeverityBadge";
 import { EvidenceBadge } from "./EvidenceBadge";
 
-export function IssueCard({ issue }: { issue: Issue }) {
+export function IssueCard({ issue, index = 0 }: { issue: Issue; index?: number }) {
   const h = HEURISTICS.find((x) => x.id === issue.heuristic);
+  const sev = severityVar(issue.severity);
   return (
     <div
-      className="border border-border bg-card p-5"
-      style={{ borderLeft: `3px solid ${severityVar(issue.severity)}` }}
+      className="cl-rise group relative border-2 border-[color:var(--border-strong)] bg-[color:var(--card)] p-5 shadow-[3px_3px_0_0_var(--border-strong)] transition-transform hover:-translate-y-[2px] hover:translate-x-[-1px] hover:shadow-[5px_5px_0_0_var(--border-strong)]"
+      style={{
+        borderLeftWidth: "6px",
+        borderLeftColor: sev,
+        animationDelay: `${Math.min(index, 12) * 55}ms`,
+      }}
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="space-y-1 min-w-0">
+        <div className="min-w-0 space-y-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-label">
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               H{issue.heuristic} · {h?.name}
             </span>
             <EvidenceBadge evidence={issue.evidence} />
           </div>
-          <h4 className="font-display text-[18px] leading-snug text-foreground">
+          <h4 className="font-display text-[20px] font-semibold leading-[1.2] text-foreground">
             {issue.title}
           </h4>
         </div>
         <SeverityBadge severity={issue.severity} />
       </div>
-      <p className="mt-3 text-[14px] leading-[1.7] text-foreground/90">{issue.description}</p>
-      <div className="mt-2 text-[12px]" style={{ color: "var(--muted-foreground)" }}>
-        <span className="text-label mr-1">Location</span>
-        {issue.location}
+      <div className="mt-2 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+        <span className="text-foreground/55">Location ▸ </span>
+        <span className="text-foreground/80 normal-case tracking-normal">{issue.location}</span>
       </div>
+      <p className="mt-3 text-[14px] leading-[1.65] text-foreground/85">{issue.description}</p>
       <div
-        className="mt-3 surface p-3 text-[14px] leading-[1.7]"
-        style={{ borderLeft: "3px solid var(--border)" }}
+        className="mt-4 border-l-[3px] bg-[color:var(--surface)] p-3 text-[14px] leading-[1.6]"
+        style={{ borderLeftColor: "var(--primary)" }}
       >
-        <span className="text-label mr-1">Recommendation</span>
+        <div className="text-label mb-1" style={{ color: "var(--primary)" }}>
+          Recommendation
+        </div>
         <span className="text-foreground/90">{issue.recommendation}</span>
       </div>
     </div>
