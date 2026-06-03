@@ -148,9 +148,9 @@ export function ReportView({
             <h3 className="font-display text-[22px] leading-none">Top priorities</h3>
             <span className="text-label">Fix first</span>
           </div>
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-3">
             {report.topPriorities.map((i, idx) => (
-              <IssueCard key={idx} issue={i} />
+              <IssueCard key={idx} issue={i} index={idx} />
             ))}
           </div>
         </section>
@@ -161,7 +161,7 @@ export function ReportView({
           <h3 className="font-display text-[22px] leading-none">Heuristic breakdown</h3>
           <span className="text-label">10 heuristics</span>
         </div>
-        <HeuristicBreakdown scores={report.heuristicScores} />
+        <HeuristicBreakdown scores={report.heuristicScores} issues={report.issues} />
       </section>
 
       <section className="space-y-5">
@@ -175,9 +175,9 @@ export function ReportView({
               <span className="text-label">H{h.id}</span>
               <span className="text-sm font-medium">{h.name}</span>
             </div>
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2">
               {issues.map((i, idx) => (
-                <IssueCard key={idx} issue={i} />
+                <IssueCard key={idx} issue={i} index={idx} />
               ))}
             </div>
           </div>

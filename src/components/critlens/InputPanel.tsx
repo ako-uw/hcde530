@@ -1,8 +1,5 @@
 import { useState, useRef } from "react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Loader2, Upload, Link2, X } from "lucide-react";
+import { Loader2, Upload, Link2, X, ArrowRight } from "lucide-react";
 
 export type AnalysisInput =
   | { kind: "url"; url: string }
@@ -26,6 +23,7 @@ export function InputPanel({
 }) {
   const [url, setUrl] = useState("");
   const [preview, setPreview] = useState<{ dataUrl: string; mimeType: string; name: string } | null>(null);
+  const [dragging, setDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function handleFile(file: File) {
@@ -37,63 +35,86 @@ export function InputPanel({
     setPreview({ dataUrl, mimeType: file.type, name: file.name });
   }
 
+  function onSubmit() {
+    if (loading) return;
+    if (preview) {
+      onAnalyze({ kind: "image", dataUrl: preview.dataUrl, mimeType: preview.mimeType });
+    } else if (url) {
+      onAnalyze({ kind: "url", url });
+    }
+  }
+
+  const canSubmit = !loading && (!!url || !!preview);
+
   return (
-    <div className="border border-border bg-card p-6 md:p-8">
-      <div className="mb-5 flex items-center justify-between border-b border-border pb-3">
-        <h2 className="font-display text-[20px] leading-none">New evaluation</h2>
-        <span className="text-label">Nielsen 10</span>
+    <div className="border-2 border-[color:var(--border-strong)] bg-[color:var(--card)] shadow-[6px_6px_0_0_var(--border-strong)]">
+      <div className="flex items-center justify-between border-b-2 border-[color:var(--border-strong)] px-6 py-3 md:px-8">
+        <div className="flex items-center gap-2">
+          <span className="size-2 rounded-full bg-[color:var(--primary)]" />
+          <h2 className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em]">
+            New evaluation
+          </h2>
+        </div>
+        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          URL or screenshot
+        </span>
       </div>
-      <Tabs defaultValue="url">
-        <TabsList className="rounded-none bg-[color:var(--surface)]">
-          <TabsTrigger value="url" className="rounded-none font-mono text-[11px] uppercase tracking-[0.12em]">
-            <Link2 className="size-3.5" /> URL
-          </TabsTrigger>
-          <TabsTrigger value="image" className="rounded-none font-mono text-[11px] uppercase tracking-[0.12em]">
-            <Upload className="size-3.5" /> Screenshot
-          </TabsTrigger>
-        </TabsList>
 
-        <TabsContent value="url" className="mt-4 space-y-2">
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Input
-              type="url"
-              placeholder="https://example.com"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              disabled={loading}
-              className="h-11 rounded-none"
-            />
-            <Button
-              onClick={() => onAnalyze({ kind: "url", url })}
-              disabled={loading || !url}
-              className="h-11 cursor-pointer rounded-none px-6 font-mono text-[11px] uppercase tracking-[0.14em]"
-            >
-              {loading && <Loader2 className="size-4 animate-spin" />}
-              Evaluate
-            </Button>
-          </div>
-          <p className="text-[12.5px] leading-relaxed text-muted-foreground">
-            Public pages only. Sites behind login walls, queues, or CDN challenges get
-            blocked rather than scored — drop a screenshot in that case.
+      <div className="grid gap-px bg-[color:var(--border-strong)] md:grid-cols-[1.3fr_1fr]">
+        {/* URL field */}
+        <div className="bg-[color:var(--card)] p-6 md:p-8">
+          <label className="text-label flex items-center gap-1.5">
+            <Link2 className="size-3" /> URL
+          </label>
+          <input
+            type="url"
+            placeholder="https://example.com"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            disabled={loading}
+            onKeyDown={(e) => e.key === "Enter" && canSubmit && onSubmit()}
+            className="mt-3 h-12 w-full border-b-2 border-[color:var(--border-strong)] bg-transparent font-display text-[20px] tracking-tight outline-none placeholder:font-display placeholder:text-foreground/30 focus:border-[color:var(--primary)]"
+          />
+          <p className="mt-3 text-[12.5px] leading-relaxed text-muted-foreground">
+            Public pages only. Sites behind login walls, queues, or CDN challenges
+            return as <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-foreground/80">blocked</span> rather than scored.
           </p>
-        </TabsContent>
+        </div>
 
-        <TabsContent value="image" className="mt-4 space-y-2">
+        {/* Drop zone */}
+        <div className="bg-[color:var(--card)] p-6 md:p-8">
+          <label className="text-label flex items-center gap-1.5">
+            <Upload className="size-3" /> Screenshot
+          </label>
           {!preview ? (
             <div
+              role="button"
+              tabIndex={0}
               onClick={() => fileRef.current?.click()}
-              onDragOver={(e) => e.preventDefault()}
+              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && fileRef.current?.click()}
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (!dragging) setDragging(true);
+              }}
+              onDragLeave={() => setDragging(false)}
               onDrop={(e) => {
                 e.preventDefault();
+                setDragging(false);
                 const f = e.dataTransfer.files[0];
-                if (f) handleFile(f);
+                if (f) void handleFile(f);
               }}
-              className="flex cursor-pointer flex-col items-center justify-center gap-2 border border-dashed border-border bg-[color:var(--surface)] px-6 py-14 text-center transition-colors hover:border-foreground"
+              className={`mt-3 flex cursor-pointer flex-col items-center justify-center gap-1.5 border-2 border-dashed px-4 py-7 text-center transition-all ${
+                dragging
+                  ? "border-[color:var(--primary)] bg-[color:var(--primary)]/8 scale-[1.01]"
+                  : "border-[color:var(--border-strong)]/40 bg-[color:var(--surface)] hover:border-[color:var(--primary)] hover:bg-[color:var(--primary)]/5"
+              }`}
             >
-              <Upload className="size-5 text-muted-foreground" />
-              <div className="text-sm font-medium">Drop your screenshot</div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                PNG · JPG · WEBP — max 5 MB
+              <Upload className={`size-4 ${dragging ? "text-[color:var(--primary)]" : "text-muted-foreground"}`} />
+              <div className="font-display text-[15px] font-semibold">
+                {dragging ? "Drop it" : "Drop or click"}
+              </div>
+              <div className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-muted-foreground">
+                PNG · JPG · WEBP · max 5 MB
               </div>
               <input
                 ref={fileRef}
@@ -102,34 +123,44 @@ export function InputPanel({
                 className="hidden"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
-                  if (f) handleFile(f);
+                  if (f) void handleFile(f);
                 }}
               />
             </div>
           ) : (
-            <div className="relative overflow-hidden border border-border">
-              <img src={preview.dataUrl} alt={preview.name} className="max-h-80 w-full object-contain bg-[color:var(--surface)]" />
+            <div className="relative mt-3 overflow-hidden border-2 border-[color:var(--border-strong)]">
+              <img
+                src={preview.dataUrl}
+                alt={preview.name}
+                className="max-h-44 w-full object-contain bg-[color:var(--surface)]"
+              />
               <button
                 onClick={() => setPreview(null)}
-                className="absolute right-2 top-2 bg-white p-1.5 border border-border hover:bg-[color:var(--surface)]"
+                aria-label="Remove screenshot"
+                className="absolute right-1.5 top-1.5 border border-[color:var(--border-strong)] bg-[color:var(--card)] p-1 hover:bg-[color:var(--surface)]"
               >
                 <X className="size-3.5" />
               </button>
             </div>
           )}
-          <Button
-            onClick={() =>
-              preview &&
-              onAnalyze({ kind: "image", dataUrl: preview.dataUrl, mimeType: preview.mimeType })
-            }
-            disabled={loading || !preview}
-            className="h-11 w-full cursor-pointer rounded-none px-6 font-mono text-[11px] uppercase tracking-[0.14em] sm:w-auto"
-          >
-            {loading && <Loader2 className="size-4 animate-spin" />}
-            Evaluate screenshot
-          </Button>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
+
+      {/* Primary action */}
+      <div className="flex items-center justify-between border-t-2 border-[color:var(--border-strong)] bg-[color:var(--surface)] px-6 py-4 md:px-8">
+        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          {preview ? "Screenshot ready" : url ? "URL ready" : "Add input"}
+        </span>
+        <button
+          onClick={onSubmit}
+          disabled={!canSubmit}
+          className="group inline-flex h-11 cursor-pointer items-center gap-2.5 border-2 border-[color:var(--border-strong)] bg-[color:var(--primary)] px-5 font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--primary-foreground)] shadow-[3px_3px_0_0_var(--border-strong)] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_var(--border-strong)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[3px_3px_0_0_var(--border-strong)]"
+        >
+          {loading && <Loader2 className="size-4 animate-spin" />}
+          Evaluate
+          <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+        </button>
+      </div>
     </div>
   );
 }
