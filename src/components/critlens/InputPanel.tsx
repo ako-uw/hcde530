@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Loader2, Upload, Link2, X, ArrowRight } from "lucide-react";
 
 export type AnalysisInput =
@@ -14,6 +14,8 @@ function readFileAsDataUrl(file: File): Promise<string> {
   });
 }
 
+type Tab = "url" | "screenshot";
+
 export function InputPanel({
   onAnalyze,
   loading,
@@ -24,7 +26,17 @@ export function InputPanel({
   const [url, setUrl] = useState("");
   const [preview, setPreview] = useState<{ dataUrl: string; mimeType: string; name: string } | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>("url");
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Switch tab when content appears in the other field
+  useEffect(() => {
+    if (url && !preview) setActiveTab("url");
+  }, [url, preview]);
+
+  useEffect(() => {
+    if (preview && !url) setActiveTab("screenshot");
+  }, [preview, url]);
 
   async function handleFile(file: File) {
     if (file.size > 5 * 1024 * 1024) {
@@ -33,6 +45,8 @@ export function InputPanel({
     }
     const dataUrl = await readFileAsDataUrl(file);
     setPreview({ dataUrl, mimeType: file.type, name: file.name });
+    setUrl("");
+    setActiveTab("screenshot");
   }
 
   function onSubmit() {
@@ -46,8 +60,36 @@ export function InputPanel({
 
   const canSubmit = !loading && (!!url || !!preview);
 
+  const tabBtn = (tab: Tab, label: string, Icon: typeof Link2) => {
+    const isActive = activeTab === tab;
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          if (loading) return;
+          setActiveTab(tab);
+          if (tab === "url") {
+            setPreview(null);
+          } else {
+            setUrl("");
+          }
+        }}
+        disabled={loading}
+        className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 border-b-2 px-4 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.18em] transition-all ${
+          isActive
+            ? "border-[color:var(--primary)] bg-[color:var(--primary)]/8 text-[color:var(--primary)]"
+            : "border-transparent text-muted-foreground hover:bg-[color:var(--surface)] hover:text-foreground"
+        } disabled:cursor-not-allowed disabled:opacity-40`}
+      >
+        <Icon className="size-3.5" />
+        {label}
+      </button>
+    );
+  };
+
   return (
     <div className="border-2 border-[color:var(--border-strong)] bg-[color:var(--card)] shadow-[6px_6px_0_0_var(--border-strong)]">
+      {/* Header */}
       <div className="flex items-center justify-between border-b-2 border-[color:var(--border-strong)] px-6 py-3 md:px-8">
         <div className="flex items-center gap-2">
           <span className="size-2 rounded-full bg-[color:var(--primary)]" />
@@ -56,94 +98,105 @@ export function InputPanel({
           </h2>
         </div>
         <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-          URL or screenshot
+          {activeTab === "url" ? "URL" : "Screenshot"}
         </span>
       </div>
 
-      <div className="grid gap-px bg-[color:var(--border-strong)] md:grid-cols-[1.3fr_1fr]">
-        {/* URL field */}
-        <div className="bg-[color:var(--card)] p-6 md:p-8">
-          <label className="text-label flex items-center gap-1.5">
-            <Link2 className="size-3" /> URL
-          </label>
-          <input
-            type="url"
-            placeholder="https://example.com"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            disabled={loading}
-            onKeyDown={(e) => e.key === "Enter" && canSubmit && onSubmit()}
-            className="mt-3 h-12 w-full border-b-2 border-[color:var(--border-strong)] bg-transparent font-display text-[20px] tracking-tight outline-none placeholder:font-display placeholder:text-foreground/30 focus:border-[color:var(--primary)]"
-          />
-          <p className="mt-3 text-[12.5px] leading-relaxed text-muted-foreground">
-            Public pages only. Sites behind login walls, queues, or CDN challenges
-            return as <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-foreground/80">blocked</span> rather than scored.
-          </p>
-        </div>
+      {/* Tabs */}
+      <div className="flex border-b border-[color:var(--border-strong)]">
+        {tabBtn("url", "URL", Link2)}
+        {tabBtn("screenshot", "Screenshot", Upload)}
+      </div>
 
-        {/* Drop zone */}
-        <div className="bg-[color:var(--card)] p-6 md:p-8">
-          <label className="text-label flex items-center gap-1.5">
-            <Upload className="size-3" /> Screenshot
-          </label>
-          {!preview ? (
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={() => fileRef.current?.click()}
-              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && fileRef.current?.click()}
-              onDragOver={(e) => {
-                e.preventDefault();
-                if (!dragging) setDragging(true);
-              }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragging(false);
-                const f = e.dataTransfer.files[0];
-                if (f) void handleFile(f);
-              }}
-              className={`mt-3 flex cursor-pointer flex-col items-center justify-center gap-1.5 border-2 border-dashed px-4 py-7 text-center transition-all ${
-                dragging
-                  ? "border-[color:var(--primary)] bg-[color:var(--primary)]/8 scale-[1.01]"
-                  : "border-[color:var(--border-strong)]/40 bg-[color:var(--surface)] hover:border-[color:var(--primary)] hover:bg-[color:var(--primary)]/5"
-              }`}
-            >
-              <Upload className={`size-4 ${dragging ? "text-[color:var(--primary)]" : "text-muted-foreground"}`} />
-              <div className="font-display text-[15px] font-semibold">
-                {dragging ? "Drop it" : "Drop or click"}
-              </div>
-              <div className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-muted-foreground">
-                PNG · JPG · WEBP · max 5 MB
-              </div>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
+      {/* Content */}
+      <div className="p-6 md:p-8">
+        {activeTab === "url" ? (
+          <div>
+            <label className="text-label flex items-center gap-1.5">
+              <Link2 className="size-3" /> Web address
+            </label>
+            <input
+              type="url"
+              placeholder="https://example.com"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              disabled={loading}
+              onKeyDown={(e) => e.key === "Enter" && canSubmit && onSubmit()}
+              className="mt-3 h-12 w-full border-b-2 border-[color:var(--border-strong)] bg-transparent font-display text-[20px] tracking-tight outline-none placeholder:font-display placeholder:text-foreground/30 focus:border-[color:var(--primary)]"
+            />
+            <p className="mt-3 text-[12.5px] leading-relaxed text-muted-foreground">
+              Public pages only. Sites behind login walls, queues, or CDN challenges
+              return as{" "}
+              <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-foreground/80">
+                blocked
+              </span>{" "}
+              rather than scored.
+            </p>
+          </div>
+        ) : (
+          <div>
+            <label className="text-label flex items-center gap-1.5">
+              <Upload className="size-3" /> Upload
+            </label>
+            {!preview ? (
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => fileRef.current?.click()}
+                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && fileRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (!dragging) setDragging(true);
+                }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragging(false);
+                  const f = e.dataTransfer.files[0];
                   if (f) void handleFile(f);
                 }}
-              />
-            </div>
-          ) : (
-            <div className="relative mt-3 overflow-hidden border-2 border-[color:var(--border-strong)]">
-              <img
-                src={preview.dataUrl}
-                alt={preview.name}
-                className="max-h-44 w-full object-contain bg-[color:var(--surface)]"
-              />
-              <button
-                onClick={() => setPreview(null)}
-                aria-label="Remove screenshot"
-                className="absolute right-1.5 top-1.5 border border-[color:var(--border-strong)] bg-[color:var(--card)] p-1 hover:bg-[color:var(--surface)]"
+                className={`mt-3 flex cursor-pointer flex-col items-center justify-center gap-1.5 border-2 border-dashed px-4 py-10 text-center transition-all ${
+                  dragging
+                    ? "border-[color:var(--primary)] bg-[color:var(--primary)]/8 scale-[1.01]"
+                    : "border-[color:var(--border-strong)]/40 bg-[color:var(--surface)] hover:border-[color:var(--primary)] hover:bg-[color:var(--primary)]/5"
+                }`}
               >
-                <X className="size-3.5" />
-              </button>
-            </div>
-          )}
-        </div>
+                <Upload className={`size-5 ${dragging ? "text-[color:var(--primary)]" : "text-muted-foreground"}`} />
+                <div className="font-display text-[16px] font-semibold">
+                  {dragging ? "Drop it here" : "Drop or click to upload"}
+                </div>
+                <div className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-muted-foreground">
+                  PNG · JPG · WEBP · max 5 MB
+                </div>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) void handleFile(f);
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="relative mt-3 overflow-hidden border-2 border-[color:var(--border-strong)]">
+                <img
+                  src={preview.dataUrl}
+                  alt={preview.name}
+                  className="max-h-52 w-full object-contain bg-[color:var(--surface)]"
+                />
+                <button
+                  onClick={() => setPreview(null)}
+                  aria-label="Remove screenshot"
+                  className="absolute right-1.5 top-1.5 border border-[color:var(--border-strong)] bg-[color:var(--card)] p-1 hover:bg-[color:var(--surface)]"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Primary action */}
