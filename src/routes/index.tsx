@@ -23,6 +23,8 @@ export const Route = createFileRoute("/")({
 function Index() {
   const { report, isPending, isError, error, runAnalyze, reset } = useCritique();
 
+  const currentStep: 1 | 2 | 3 = report ? 3 : isPending ? 2 : 1;
+
   return (
     <div>
       <Toaster />
@@ -39,6 +41,8 @@ function Index() {
             </p>
           </section>
         )}
+
+        <Stepper step={currentStep} />
 
         <InputPanel loading={isPending} onAnalyze={runAnalyze} />
 
