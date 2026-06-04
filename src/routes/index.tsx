@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { InputPanel } from "@/components/critlens/InputPanel";
 import { ReportView } from "@/components/critlens/ReportView";
+import { Stepper } from "@/components/critlens/Stepper";
 import { useCritique } from "@/lib/critique-context";
 
 export const Route = createFileRoute("/")({
