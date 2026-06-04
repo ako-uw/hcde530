@@ -27,41 +27,15 @@ function Index() {
       <Toaster />
       <div className="mx-auto max-w-6xl space-y-12 px-6 py-10 md:px-10 md:py-16">
         {!report && (
-          <section className="grid gap-8 border-b-2 border-[color:var(--border-strong)] pb-12 md:grid-cols-[1.4fr_1fr] md:gap-12 md:pb-16">
-            <div>
-              <div className="inline-flex items-center gap-2 border border-[color:var(--border-strong)] bg-[color:var(--card)] px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.22em]">
-                <span className="size-1.5 rounded-full bg-[color:var(--primary)]" />
-                Heuristic evaluation · v1
-              </div>
-              <h1 className="font-display mt-6 text-[52px] font-bold leading-[0.95] tracking-[-0.03em] md:text-[88px]">
-                Read the<br />
-                <span className="text-[color:var(--primary)]">interface</span>,<br />
-                not the pitch deck.
-              </h1>
-              <p className="mt-7 max-w-lg text-[17px] leading-[1.6] text-foreground/75">
-                CritLens runs a structured heuristic evaluation against Nielsen's
-                ten usability principles. Every finding carries an evidence tag.
-                Nothing gets inflated, nothing gets faked.
-              </p>
-            </div>
-            <aside className="hidden border-l-2 border-[color:var(--border-strong)] pl-8 md:block">
-              <div className="text-label">What you get</div>
-              <ul className="mt-4 space-y-3">
-                {[
-                  ["01", "10 heuristics, individually tagged"],
-                  ["02", "Severity S1–S4 with caps"],
-                  ["03", "Findings with concrete fixes"],
-                  ["04", "Blocked, not faked, on errors"],
-                ].map(([n, t]) => (
-                  <li key={n} className="flex gap-3 border-b border-border pb-2">
-                    <span className="font-mono text-[11px] font-semibold tracking-[0.1em] text-[color:var(--primary)]">
-                      {n}
-                    </span>
-                    <span className="text-[14px] leading-snug">{t}</span>
-                  </li>
-                ))}
-              </ul>
-            </aside>
+          <section className="border-b-2 border-[color:var(--border-strong)] pb-10 md:pb-14">
+            <h1 className="font-display text-[42px] font-bold leading-[1.05] tracking-[-0.03em] text-foreground md:text-[72px]">
+              Read an interface.<br className="hidden md:block" />{" "}
+              <span className="text-[color:var(--primary)]">Like a practitioner would.</span>
+            </h1>
+            <p className="mt-5 max-w-2xl text-[16px] leading-[1.55] text-foreground/70 md:text-[17px]">
+              CritLens runs a structured heuristic evaluation against Nielsen's 10
+              principles and returns a prioritized findings report.
+            </p>
           </section>
         )}
 
