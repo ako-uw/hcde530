@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { InputPanel } from "@/components/critlens/InputPanel";
 import { ReportView } from "@/components/critlens/ReportView";
+import { Stepper } from "@/components/critlens/Stepper";
 import { useCritique } from "@/lib/critique-context";
 
 export const Route = createFileRoute("/")({
@@ -22,6 +23,8 @@ export const Route = createFileRoute("/")({
 function Index() {
   const { report, isPending, isError, error, runAnalyze, reset } = useCritique();
 
+  const currentStep: 1 | 2 | 3 = report ? 3 : isPending ? 2 : 1;
+
   return (
     <div>
       <Toaster />
@@ -38,6 +41,8 @@ function Index() {
             </p>
           </section>
         )}
+
+        <Stepper step={currentStep} />
 
         <InputPanel loading={isPending} onAnalyze={runAnalyze} />
 
