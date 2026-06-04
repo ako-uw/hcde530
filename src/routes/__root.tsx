@@ -89,6 +89,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "CritLens — Heuristic evaluation for designers" },
+      { name: "description", content: "CritLens analyzes any website URL or screenshot and returns a structured heuristic evaluation based on Nielsen's 10 usability principles, with severity ratings" },
+      { property: "og:description", content: "CritLens analyzes any website URL or screenshot and returns a structured heuristic evaluation based on Nielsen's 10 usability principles, with severity ratings" },
+      { name: "twitter:description", content: "CritLens analyzes any website URL or screenshot and returns a structured heuristic evaluation based on Nielsen's 10 usability principles, with severity ratings" },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a3b9c9c0-386f-4aa5-b900-a64bd6fee6e7/id-preview-78fad11a--d5c087cf-7166-44c0-9e46-8aeb7340f47e.lovable.app-1780539631122.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a3b9c9c0-386f-4aa5-b900-a64bd6fee6e7/id-preview-78fad11a--d5c087cf-7166-44c0-9e46-8aeb7340f47e.lovable.app-1780539631122.png" },
     ],
     links: [
       {
