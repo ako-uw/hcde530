@@ -34,7 +34,7 @@ export function SiteHeader() {
               CritLens
             </span>
             <span className="hidden font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground sm:inline">
-              · Issue 01
+              · BETA
             </span>
           </span>
         </Link>

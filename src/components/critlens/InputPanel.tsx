@@ -149,7 +149,7 @@ export function InputPanel({
       {/* Primary action */}
       <div className="flex items-center justify-between border-t-2 border-[color:var(--border-strong)] bg-[color:var(--surface)] px-6 py-4 md:px-8">
         <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-          {preview ? "Screenshot ready" : url ? "URL ready" : "Add input"}
+          {preview ? "Screenshot ready" : url ? "URL ready" : "\u00A0"}
         </span>
         <button
           onClick={onSubmit}
