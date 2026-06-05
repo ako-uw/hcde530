@@ -38,40 +38,71 @@ function MethodologyPage() {
       </header>
 
       <div className="grid gap-0 md:grid-cols-[5fr_4fr]">
-        {/* Stakeholder side — editorial paper */}
-        <section className="bg-[color:var(--paper)] px-6 py-12 md:px-12 md:py-16">
-          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-            For stakeholders
-          </div>
-          <h2 className="font-display mt-3 text-[28px] leading-[1.15] md:text-[34px]">
-            What heuristic evaluation actually is.
-          </h2>
-          <div className="prose-editorial mt-6 space-y-5 text-[16px] leading-[1.8] text-foreground/90">
-            <p>
-              A heuristic evaluation is a structured walk-through of an
-              interface against a small set of well-known usability principles.
-              No users are involved. One reviewer reads the screen the way a
-              first-time user would, then writes down what's working and what
-              isn't.
-            </p>
-            <p>
-              The point isn't to grade the design. The point is to surface
-              specific, fixable problems before they reach real users — the
-              cheapest possible round of UX feedback.
-            </p>
-            <p>
-              Each finding is one observable problem, tied to one principle,
-              with one recommendation. They're ranked by how badly they'll get
-              in a user's way, from <em>cosmetic</em> up to <em>catastrophic</em>.
-            </p>
-            <p>
-              We don't pretend to see what we can't. If a flow needs login,
-              real data, or multi-step interaction we don't have access to, we
-              mark it as out of scope rather than guessing. The result is a
-              short, honest list of things worth fixing.
-            </p>
-          </div>
-        </section>
+        {/* Left column — stacked */}
+        <div className="flex flex-col">
+          {/* Stakeholder side — editorial paper */}
+          <section className="bg-[color:var(--paper)] px-6 py-12 md:px-12 md:py-16">
+            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              For stakeholders
+            </div>
+            <h2 className="font-display mt-3 text-[28px] leading-[1.15] md:text-[34px]">
+              What heuristic evaluation actually is.
+            </h2>
+            <div className="prose-editorial mt-6 space-y-5 text-[16px] leading-[1.8] text-foreground/90">
+              <p>
+                A heuristic evaluation is a structured walk-through of an
+                interface against a small set of well-known usability principles.
+                No users are involved. One reviewer reads the screen the way a
+                first-time user would, then writes down what's working and what
+                isn't.
+              </p>
+              <p>
+                The point isn't to grade the design. The point is to surface
+                specific, fixable problems before they reach real users — the
+                cheapest possible round of UX feedback.
+              </p>
+              <p>
+                Each finding is one observable problem, tied to one principle,
+                with one recommendation. They're ranked by how badly they'll get
+                in a user's way, from <em>cosmetic</em> up to <em>catastrophic</em>.
+              </p>
+              <p>
+                We don't pretend to see what we can't. If a flow needs login,
+                real data, or multi-step interaction we don't have access to, we
+                mark it as out of scope rather than guessing. The result is a
+                short, honest list of things worth fixing.
+              </p>
+            </div>
+          </section>
+
+          {/* How Input Types Are Analyzed */}
+          <section className="bg-[color:var(--paper)] px-6 py-12 md:px-12 md:py-16 border-t border-border">
+            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              Input methods
+            </div>
+            <h2 className="font-display mt-3 text-[28px] leading-[1.15] md:text-[34px]">
+              How Input Types Are Analyzed
+            </h2>
+            <div className="mt-8 space-y-8">
+              <div>
+                <h3 className="font-display text-[18px] leading-[1.3] text-foreground">
+                  URL Analysis
+                </h3>
+                <p className="mt-2 text-[15px] leading-[1.75] text-foreground/80">
+                  When a URL is submitted, CritLens fetches the page HTML and extracts the text content and structure. The AI analyzes content hierarchy, navigation labels, information architecture, and structural patterns. Visual properties such as color, spacing, and typography are not directly evaluated through this method.
+                </p>
+              </div>
+              <div>
+                <h3 className="font-display text-[18px] leading-[1.3] text-foreground">
+                  Screenshot Analysis
+                </h3>
+                <p className="mt-2 text-[15px] leading-[1.75] text-foreground/80">
+                  When a screenshot is uploaded, the image is sent directly to an AI vision model. The AI sees the interface visually — including colors, typography, spacing, and layout — the way a user would. This method produces more accurate findings for visual design issues and is recommended for mockups, prototypes, or interfaces that require authentication to access.
+                </p>
+              </div>
+            </div>
+          </section>
+        </div>
 
         {/* Practitioner side — ink panel */}
         <section className="bg-[color:var(--ink)] px-6 py-12 text-[color:var(--ink-fg)] md:px-12 md:py-16">
